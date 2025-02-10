@@ -81,7 +81,7 @@ const roles = [
 }
 
 .header h1 {
-    font-size: 2.5rem; 
+    font-size: 2.7rem; 
     font-weight: bold; 
     color: rgba(74, 136, 231, 1);
     margin-bottom: 0.5rem; 
@@ -91,6 +91,7 @@ const roles = [
     color: transparent; 
     letter-spacing: 1px; 
     line-height: 1.2; 
+    font-family: 'AlimamaShuHeiTi', sans-serif; 
 }
 
 .header p {
