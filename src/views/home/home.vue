@@ -96,7 +96,7 @@ const roles = [
 .header p {
     color: rgba(74, 136, 231, 1);
     font-family: 'ZCOOLXiaoWei', sans-serif; 
-    font-size: 1.6rem;
+    font-size: 1.8rem;
 }
 
 .button-group {
