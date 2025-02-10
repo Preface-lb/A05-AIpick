@@ -1,33 +1,73 @@
-# A05-AIpick
+# sosd官网前端v2
 
-This template should help get you started developing with Vue 3 in Vite.
+## 项目结构
 
-## Recommended IDE Setup
+```
+├── public
+├── src
+│   ├── assets 静态资源
+│   ├── components 通用组件
+│   ├── layouts
+│   ├── views 对应路由页面
+│   ├── styles 样式
+│   ├── utils 通用工具函数
+│   ├── constant 常量
+│   ├── hooks 通用hook
+│   ├── api 接口请求
+│   ├── route 路由配置
+│   ├── store 状态管理
+│   ├── types 类型声明
+│   ├── request 请求封装
+│   ├── App.vue 入口文件
+│   └── index.ts
+```
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 项目开始(使用npm或pnpm)
 
-## Type Support for `.vue` Imports in TS
+安装依赖:
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+```bash
+pnpm install
+```
 
-## Customize configuration
+或
 
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+启动项目:
 
-```sh
+```bash
+pnpm dev
+```
+
+或
+
+```bash
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+打包项目:
 
-```sh
+```bash
+pnpm build
+```
+
+或
+
+```bash
 npm run build
+```
+
+本地预览生产环境构建的项目:
+
+```bash
+pnpm preview
+```
+
+或
+
+```bash
+npm run preview
 ```

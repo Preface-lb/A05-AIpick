@@ -1,0 +1,9 @@
+$color: red;
+$fontColor: blue;
+
+.demo {
+  background-color: $color;
+  .demo__item {
+    color: $fontColor;
+  }
+}
