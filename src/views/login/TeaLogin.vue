@@ -1,35 +1,37 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h1 class="login-title">
-        爱排课 Alpick
-      </h1>
-      
+      <h1 class="login-title">爱排课 Alpick</h1>
+
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
           <label>用户名</label>
-          <input 
+          <input
             v-model="username"
             type="text"
             placeholder="请输入用户名"
             @focus="focusInput('username')"
             @blur="blurInput('username')"
-          >
-          <span v-if="usernameError" class="error-message">{{ usernameError }}</span>
+          />
+          <span v-if="usernameError" class="error-message">{{
+            usernameError
+          }}</span>
         </div>
-        
+
         <div class="form-group">
           <label>密码</label>
-          <input 
+          <input
             v-model="password"
             type="password"
             placeholder="请输入密码"
             @focus="focusInput('password')"
             @blur="blurInput('password')"
-          >
-          <span v-if="passwordError" class="error-message">{{ passwordError }}</span>
+          />
+          <span v-if="passwordError" class="error-message">{{
+            passwordError
+          }}</span>
         </div>
-        
+
         <button type="submit" :disabled="isSubmitting">
           <span v-if="!isSubmitting">登 入</span>
           <span v-else>正在登录...</span>
@@ -68,7 +70,7 @@ const handleLogin = () => {
   setTimeout(() => {
     console.log('Login attempt:', {
       username: username.value,
-      password: password.value
+      password: password.value,
     })
     isSubmitting.value = false
   }, 2000)
@@ -92,16 +94,15 @@ const blurInput = (type) => {
 </script>
 
 <style scoped>
-
 @import '@/style/global.css';
 
 .login-container {
   min-height: 100vh;
   width: 100%;
-  background-image: url('@/assets/home.png'); 
-  background-size: cover; 
-  background-position: center; 
-  background-repeat: no-repeat; 
+  background-image: url('@/assets/home.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,18 +125,18 @@ const blurInput = (type) => {
 }
 
 .login-title {
-  font-size: 2.5rem; 
-  font-weight: bold; 
+  font-size: 2.5rem;
+  font-weight: bold;
   color: rgba(74, 136, 231, 1);
-  margin-bottom: 0.5rem; 
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); 
-  background: linear-gradient(45deg, #6ea4f4, #743ddb); 
-  -webkit-background-clip: text; 
-  color: transparent; 
-  letter-spacing: 1px; 
-  line-height: 1.2; 
-  font-family: 'AlimamaShuHeiTi', sans-serif; 
-  text-align: center; 
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(45deg, #6ea4f4, #743ddb);
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  font-family: 'AlimamaShuHeiTi', sans-serif;
+  text-align: center;
 }
 
 .login-form {
@@ -154,8 +155,8 @@ const blurInput = (type) => {
 .form-group label {
   color: rgba(74, 136, 231, 1);
   font-size: 0.9rem;
-  font-weight: 1000; 
-  letter-spacing: 0.5px; 
+  font-weight: 1000;
+  letter-spacing: 0.5px;
   display: block;
 }
 
@@ -227,7 +228,7 @@ button:disabled {
   .login-card {
     padding: 2rem;
   }
-  
+
   .login-title {
     font-size: 1.5rem;
   }
