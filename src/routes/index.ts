@@ -5,6 +5,8 @@ import { StuLoginRoute } from './StuLogin'
 import { AdminLoginRoute } from './AdminLogin'
 
 import { StudentRoute } from './student'
+import { TeacherRoute } from './teacher'
+import { AdministratorRoute } from './Administrator'
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -15,7 +17,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: Layout,
-    children: [...homeRoute,...TeaLoginRoute,...StuLoginRoute,...AdminLoginRoute,...StudentRoute],
+    children: [...homeRoute,...TeaLoginRoute,...StuLoginRoute,...AdminLoginRoute,...StudentRoute,...TeacherRoute,...AdministratorRoute],
   },
   {
     path: '/403',

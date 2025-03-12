@@ -10,7 +10,10 @@
         <el-aside width="283px">
           <div class="demo-type">
             <div class="user-info">
-              <el-avatar class="user-avatar">user</el-avatar>
+              <el-avatar
+                :src="require('@/assets/PIC/stupic.png')"
+                class="custom-avatar"
+              />
               <div class="user-details">
                 <h1 class="user-name">XXX</h1>
                 <h2 class="user-class">XXX级XXX班</h2>
@@ -39,32 +42,14 @@
               <el-icon><schedule /></el-icon>
               <span>课程表</span>
             </el-menu-item>
-            <el-menu-item
-              index="3"
-              :class="{ 'is-active': activeIndex === '3' }"
-            >
-              <el-icon><edit /></el-icon>
-              <span>选课功能</span>
-            </el-menu-item>
-            <el-menu-item
-              index="4"
-              :class="{ 'is-active': activeIndex === '4' }"
-            >
-              <el-icon><document /></el-icon>
-              <span>成绩查看</span>
-            </el-menu-item>
-            <el-menu-item
-              index="5"
-              :class="{ 'is-active': activeIndex === '5' }"
-            >
-              <el-icon><notebook /></el-icon>
-              <span>学分查看</span>
-            </el-menu-item>
           </el-menu>
         </el-aside>
         <el-main>
           <!-- 动态切换内容 -->
-          <component :is="currentComponent"></component>
+          <component
+            :is="currentComponent"
+            @confirm="handleConfirm"
+          ></component>
         </el-main>
       </el-container>
     </el-container>
@@ -75,17 +60,13 @@
 import { defineComponent, ref } from 'vue'
 import Notifications from '@/views/student/stumain/Notifications.vue'
 import Stuclass from '@/views/student/stumain/Stuclass.vue'
-import CourseSelection from '@/views/student/stumain/CourseSelection.vue'
-import Grades from '@/views/student/stumain/Grades.vue'
-import Credits from '@/views/student/stumain/Credits.vue'
+import Information from '@/views/student/stumain/Information.vue'
 
 export default defineComponent({
   components: {
     Notifications,
     Stuclass,
-    CourseSelection,
-    Grades,
-    Credits,
+    Information,
   },
   setup() {
     const activeIndex = ref('1')
@@ -94,31 +75,24 @@ export default defineComponent({
 
     const handleSelect = (index) => {
       activeIndex.value = index
-      switch (index) {
-        case '1':
-          currentComponent.value = Notifications
-          break
-        case '2':
-          currentComponent.value = Stuclass
-          break
-        case '3':
-          currentComponent.value = CourseSelection
-          break
-        case '4':
-          currentComponent.value = Grades
-          break
-        case '5':
-          currentComponent.value = Credits
-          break
-        default:
-          currentComponent.value = Notifications
+      if (index === '1') {
+        currentComponent.value = Notifications
+      } else if (index === '2') {
+        // 点击课程表时，先显示 Information 界面
+        currentComponent.value = Information
       }
+    }
+
+    const handleConfirm = () => {
+      // 点击 Information 确定按钮后，切换到 Stuclass
+      currentComponent.value = Stuclass
     }
 
     return {
       activeIndex,
       currentComponent,
       handleSelect,
+      handleConfirm,
       menuKey,
     }
   },
@@ -178,12 +152,10 @@ export default defineComponent({
   gap: 10px;
 }
 
-.user-avatar {
-  width: 90px;
-  height: 90px;
-  font-size: 18px;
-  background-color: #409eff;
-  color: #fff;
+.custom-avatar {
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
 }
 
 .user-details {
@@ -207,7 +179,7 @@ export default defineComponent({
 }
 
 .el-main {
-  background-color: rgba(222, 234, 251, 1);
+  background: rgba(222, 234, 251, 1);
   color: #333;
   padding: 20px;
   flex: 1;
@@ -222,16 +194,14 @@ export default defineComponent({
 .menu .el-menu-item {
   color: #fff;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .menu .el-menu-item.is-active {
   background-color: rgba(30, 48, 98, 1);
 }
+
 .menu .el-menu-item:hover {
   background-color: rgba(30, 48, 98, 1);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 800;
 }
 </style>

@@ -26,8 +26,8 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue';
-import { ElCard, ElDivider, ElContainer, ElHeader, ElMain } from 'element-plus';
+import { defineComponent, ref } from 'vue'
+import { ElCard, ElDivider, ElContainer, ElHeader, ElMain } from 'element-plus'
 
 export default defineComponent({
   components: {
@@ -49,13 +49,13 @@ export default defineComponent({
         type: '选课',
         message: '2024年春季选课系统已开放，请及时登录系统进行选课。',
       },
-    ]);
+    ])
 
     return {
       notifications,
-    };
+    }
   },
-});
+})
 </script>
 
 <style scoped>
