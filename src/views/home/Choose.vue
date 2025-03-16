@@ -24,46 +24,53 @@
     <!-- Main content card -->
     <div class="content-wrapper">
       <div class="content-card">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <!-- 替换为PNG图片 -->
+            <img src="@/assets/logo.png" alt="Logo" class="logo-img">
+          </div>
+        </div>
         
         <div class="header">
           <h1>爱排课 Alpick</h1>
           <p>让每一节课都恰逢其时</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="login-form">
-          <div class="form-group">
-            <label>用户名</label>
-            <input
-              v-model="username"
-              type="text"
-              placeholder="请输入用户名"
-              @focus="focusInput('username')"
-              @blur="blurInput('username')"
-            />
-            <span v-if="usernameError" class="error-message">{{
-              usernameError
-            }}</span>
-          </div>
+        <div class="divider">
+          <span></span>
+          <div class="divider-text">选择您的身份</div>
+          <span></span>
+        </div>
 
-          <div class="form-group">
-            <label>密码</label>
-            <input
-              v-model="password"
-              type="password"
-              placeholder="请输入密码"
-              @focus="focusInput('password')"
-              @blur="blurInput('password')"
-            />
-            <span v-if="passwordError" class="error-message">{{
-              passwordError
-            }}</span>
-          </div>
-
-          <button type="submit" :disabled="isSubmitting">
-            <span v-if="!isSubmitting">登 入</span>
-            <span v-else>正在登录...</span>
-          </button>
-        </form>
+        <div class="button-group">
+          <router-link
+            v-for="(role, index) in roles"
+            :key="index"
+            :to="role.path"
+            class="button"
+          >
+            <span class="button-icon">
+              <svg v-if="role.value === 'student'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path>
+              </svg>
+              <svg v-if="role.value === 'teacher'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                <line x1="6" y1="1" x2="6" y2="4"></line>
+                <line x1="10" y1="1" x2="10" y2="4"></line>
+                <line x1="14" y1="1" x2="14" y2="4"></line>
+              </svg>
+              <svg v-if="role.value === 'admin'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </span>
+            <span class="button-text">{{ role.label }}</span>
+          </router-link>
+        </div>
 
         <div class="footer">
           <p>© {{ new Date().getFullYear() }} 爱排课 Alpick. 版权所有</p>
@@ -73,59 +80,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
-const username = ref('')
-const password = ref('')
-const usernameError = ref('')
-const passwordError = ref('')
-const isSubmitting = ref(false)
-
-const handleLogin = () => {
-  // 清空之前的错误信息
-  usernameError.value = ''
-  passwordError.value = ''
-
-  // 校验用户名和密码
-  if (!username.value.trim()) {
-    usernameError.value = '用户名不能为空'
-    return
-  }
-  if (!password.value.trim()) {
-    passwordError.value = '密码不能为空'
-    return
-  }
-
-  // 模拟登录提交
-  isSubmitting.value = true
-  setTimeout(() => {
-    console.log('Login attempt:', {
-      username: username.value,
-      password: password.value,
-    })
-    isSubmitting.value = false
-  }, 2000)
-}
-
-const focusInput = (type) => {
-  if (type === 'username') {
-    usernameError.value = ''
-  } else if (type === 'password') {
-    passwordError.value = ''
-  }
-}
-
-const blurInput = (type) => {
-  if (type === 'username' && !username.value.trim()) {
-    usernameError.value = '用户名不能为空'
-  } else if (type === 'password' && !password.value.trim()) {
-    passwordError.value = '密码不能为空'
-  }
-}
+const roles = [
+  { label: '我是学生', value: 'student', path: '/stulogin' },
+  { label: '我是教师', value: 'teacher', path: '/tealogin' },
+  { label: '我是管理员', value: 'admin', path: '/adminlogin' },
+]
 </script>
 
 <style scoped>
+
 @import '@/style/global.css';
 
 /* Base styles */
@@ -255,6 +221,29 @@ const blurInput = (type) => {
     0 30px 40px -5px rgba(59, 130, 246, 0.1);
 }
 
+/* Logo styles */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.logo-icon {
+  width: 60px;
+  height: 60px;
+  background: #2563eb;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+
+.logo-img {
+  width: 55px;
+  height: 55px;
+}
+
 /* Header styles */
 .header {
   text-align: center;
@@ -273,6 +262,8 @@ const blurInput = (type) => {
   font-family: 'ZPMDZ', sans-serif;
 }
 
+
+
 .header p {
   color: #64748b;
   font-size: 1.1rem;
@@ -280,78 +271,96 @@ const blurInput = (type) => {
   font-family: 'ZCOOLXiaoWei', sans-serif;
 }
 
-/* Form styles */
-.login-form {
+/* Divider styles */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 2rem 0;
+}
+
+.divider span {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(203, 213, 225, 0.7), transparent);
+}
+
+.divider-text {
+  padding: 0 1rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Button styles */
+.button-group {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.form-group {
+.button {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-}
-
-.form-group label {
-  color: rgba(74, 136, 231, 1);
-  font-size: 0.9rem;
-  font-weight: 1000;
-  letter-spacing: 0.5px;
-  display: block;
-}
-
-.form-group input {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 30px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #4169e1;
-  box-shadow: 0 0 0 4px rgba(65, 105, 225, 0.1);
-}
-
-.error-message {
-  color: red;
-  font-size: 0.8rem;
-  position: absolute;
-  bottom: -1.5rem;
-  left: 0;
-}
-
-button {
-  background: #4169e1;
+  align-items: center;
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
-  padding: 0.875rem;
-  border-radius: 25px;
+  border-radius: 0.75rem;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 0.5rem;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
 }
 
-button:hover {
-  background: #3157d5;
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s ease;
+}
+
+.button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(65, 105, 225, 0.2);
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.1);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
-button:active {
+.button:hover::before {
+  left: 100%;
+}
+
+.button:active {
   transform: translateY(0);
 }
 
-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+.button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 0.75rem;
+}
+
+.button-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.button-text {
+  flex: 1;
+  text-align: center;
 }
 
 /* Footer styles */
@@ -401,6 +410,16 @@ button:disabled {
 
   .header p {
     font-size: 1rem;
+  }
+
+  .logo-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logo-img {
+    width: 28px;
+    height: 28px;
   }
 }
 

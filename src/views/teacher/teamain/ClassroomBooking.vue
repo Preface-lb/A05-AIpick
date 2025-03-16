@@ -1,6 +1,5 @@
 <template>
   <div class="classroom-booking">
-    <h2 class="booking-title">教室预约</h2>
     <div class="table-container">
       <table>
         <thead>
@@ -89,18 +88,6 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.booking-title {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-  font-size: 24px;
-  font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
 
 .table-container {
   overflow-x: auto;

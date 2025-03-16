@@ -1,12 +1,16 @@
 import { homeRoute } from './home'
+import { chooseRoute } from './Choose'
 
 import { TeaLoginRoute } from './TeaLogin'
 import { StuLoginRoute } from './StuLogin'
+import { StuRegisterRoute } from './StuRegister'
 import { AdminLoginRoute } from './AdminLogin'
 
 import { StudentRoute } from './student'
 import { TeacherRoute } from './teacher'
 import { AdministratorRoute } from './Administrator'
+import { AdministratorpickRoute } from './Administratorpick'
+import { AdministratorclassRoute } from './Administratorclass'
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -17,7 +21,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: Layout,
-    children: [...homeRoute,...TeaLoginRoute,...StuLoginRoute,...AdminLoginRoute,...StudentRoute,...TeacherRoute,...AdministratorRoute],
+    children: [...homeRoute,...chooseRoute,...TeaLoginRoute,...StuLoginRoute,...StuRegisterRoute,...AdminLoginRoute,...StudentRoute,...TeacherRoute,...AdministratorRoute,...AdministratorclassRoute,...AdministratorpickRoute],
   },
   {
     path: '/403',

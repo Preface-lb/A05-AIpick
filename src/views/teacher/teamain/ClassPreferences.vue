@@ -1,6 +1,5 @@
 <template>
   <div class="class-preferences">
-    <h2 class="preferences-title">上课偏好</h2>
     <div class="preferences-container">
       <div class="preference-section">
         <h3>上课时间偏好</h3>
@@ -131,18 +130,6 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.preferences-title {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-  font-size: 24px;
-  font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
 
 .preferences-container {
   display: flex;

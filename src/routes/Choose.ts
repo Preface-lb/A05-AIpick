@@ -1,7 +1,7 @@
 import { RoutePath } from '@/constant/route'
 import { RouteRecordRaw } from 'vue-router'
 
-export const AdministratorRoute: RouteRecordRaw[] = [
+export const chooseRoute: RouteRecordRaw[] = [
   //   {
   //     name: '风采展示',
   //     path: RoutePath.Show,
@@ -9,8 +9,9 @@ export const AdministratorRoute: RouteRecordRaw[] = [
   //   },
 
   {
-    name: 'Administrator',
-    path: '/administrator',
-    component: ()=> import('@/views/administrator/administrator.vue')
+    name: 'choose',
+    path: '/choose',
+    component: ()=> import('@/views/home/Choose.vue')
   }
 ]
+
