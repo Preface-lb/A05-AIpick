@@ -335,7 +335,7 @@ onMounted(() => {
 /* Header Styles */
 .header {
   height: 70px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;
   display: flex;
   align-items: center;
