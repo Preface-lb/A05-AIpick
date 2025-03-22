@@ -58,13 +58,13 @@
               passwordError
             }}</span>
           </div>
-
-          <button type="submit" :disabled="isSubmitting">
+       <button type="submit" :disabled="isSubmitting">
             <span v-if="!isSubmitting">登 入</span>
             <span v-else>正在登录...</span>
           </button>
         </form>
 
+   
         <div class="footer">
           <p>© {{ new Date().getFullYear() }} 爱排课 Alpick. 版权所有</p>
         </div>
@@ -75,21 +75,22 @@
 
 <script setup>
 import { ref } from 'vue'
+import { adminLogin } from '@/api/admin-auth' 
 
-const username = ref('')
+const admUserName = ref('') 
 const password = ref('')
-const usernameError = ref('')
+const admUserNameError = ref('') 
 const passwordError = ref('')
 const isSubmitting = ref(false)
 
-const handleLogin = () => {
+const handleLogin = async () => {
   // 清空之前的错误信息
-  usernameError.value = ''
+  admUserNameError.value = '' 
   passwordError.value = ''
 
   // 校验用户名和密码
-  if (!username.value.trim()) {
-    usernameError.value = '用户名不能为空'
+  if (!admUserName.value.trim()) { 
+    admUserNameError.value = '用户名不能为空' 
     return
   }
   if (!password.value.trim()) {
@@ -97,28 +98,56 @@ const handleLogin = () => {
     return
   }
 
-  // 模拟登录提交
+  // 调用后端接口
   isSubmitting.value = true
-  setTimeout(() => {
-    console.log('Login attempt:', {
-      username: username.value,
-      password: password.value,
+  try {
+    const response = await adminLogin({
+      admUserName: admUserName.value, 
+      password: password.value
     })
+    console.log('登录成功:', response.data)
+    
+    
+    let responseData
+    try {
+      responseData = JSON.parse(response.data)
+    } catch (error) {
+      console.error('解析 JSON 字符串失败:', error)
+      throw new Error('解析登录响应失败')
+    }
+    
+    
+    console.log('解析后的数据:', responseData)
+    
+  } catch (error) {
+    console.error('登录失败:', error)
+    
+    let errorMessage = '登录失败，请重试'
+    if (error.response && error.response.data) {
+      try {
+        const errorData = JSON.parse(error.response.data)
+        errorMessage = errorData.message || errorMessage
+      } catch {
+        errorMessage = error.response.data || errorMessage
+      }
+    }
+    admUserNameError.value = errorMessage 
+  } finally {
     isSubmitting.value = false
-  }, 2000)
+  }
 }
 
 const focusInput = (type) => {
-  if (type === 'username') {
-    usernameError.value = ''
+  if (type === 'admUserName') { 
+    admUserNameError.value = '' 
   } else if (type === 'password') {
     passwordError.value = ''
   }
 }
 
 const blurInput = (type) => {
-  if (type === 'username' && !username.value.trim()) {
-    usernameError.value = '用户名不能为空'
+  if (type === 'admUserName' && !admUserName.value.trim()) { 
+    admUserNameError.value = '用户名不能为空' 
   } else if (type === 'password' && !password.value.trim()) {
     passwordError.value = '密码不能为空'
   }

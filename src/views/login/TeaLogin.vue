@@ -75,21 +75,26 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { teacherLogin } from '@/api/tea-auth' // 引入老师登录的 API
 
-const username = ref('')
+const router = useRouter()
+
+const teaUserName = ref('') // 修改此处
 const password = ref('')
-const usernameError = ref('')
+const teaUserNameError = ref('') // 修改此处
 const passwordError = ref('')
 const isSubmitting = ref(false)
 
-const handleLogin = () => {
-  // 清空之前的错误信息
-  usernameError.value = ''
+// 登录处理逻辑
+const handleLogin = async () => {
+  // 清空错误信息
+  teaUserNameError.value = '' // 修改此处
   passwordError.value = ''
 
-  // 校验用户名和密码
-  if (!username.value.trim()) {
-    usernameError.value = '用户名不能为空'
+  // 校验输入
+  if (!teaUserName.value.trim()) { // 修改此处
+    teaUserNameError.value = '用户名不能为空' // 修改此处
     return
   }
   if (!password.value.trim()) {
@@ -97,29 +102,32 @@ const handleLogin = () => {
     return
   }
 
-  // 模拟登录提交
+  // 设置提交状态
   isSubmitting.value = true
-  setTimeout(() => {
-    console.log('Login attempt:', {
-      username: username.value,
-      password: password.value,
-    })
+  try {
+    const response = await teacherLogin({ teaUserName: teaUserName.value, password: password.value })
+    console.log('老师登录成功:', response)
+    localStorage.setItem('token', response.data.token) // 假设后端返回的 token 在 response.data.token 中
+    router.push('/teacher') // 登录成功后跳转到老师主页
+  } catch (error) {
+    console.error('老师登录失败:', error)
+    passwordError.value = error.message || '登录失败，请稍后再试'
+  } finally {
     isSubmitting.value = false
-  }, 2000)
-}
-
-const focusInput = (type) => {
-  if (type === 'username') {
-    usernameError.value = ''
-  } else if (type === 'password') {
-    passwordError.value = ''
   }
 }
 
-const blurInput = (type) => {
-  if (type === 'username' && !username.value.trim()) {
-    usernameError.value = '用户名不能为空'
-  } else if (type === 'password' && !password.value.trim()) {
+// 输入框聚焦与失去焦点事件
+const focusInput = (field) => {
+  if (field === 'teaUserName') teaUserNameError.value = '' // 修改此处
+  if (field === 'password') passwordError.value = ''
+}
+
+const blurInput = (field) => {
+  if (field === 'teaUserName' && !teaUserName.value.trim()) { // 修改此处
+    teaUserNameError.value = '用户名不能为空' // 修改此处
+  }
+  if (field === 'password' && !password.value.trim()) {
     passwordError.value = '密码不能为空'
   }
 }

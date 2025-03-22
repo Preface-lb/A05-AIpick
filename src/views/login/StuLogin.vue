@@ -11,9 +11,9 @@
 
     <!-- Floating particles -->
     <div class="particles">
-      <div v-for="n in 20" :key="n" class="particle" 
-           :style="{ 
-             left: `${Math.random() * 100}%`, 
+      <div v-for="n in 20" :key="n" class="particle"
+           :style="{
+             left: `${Math.random() * 100}%`,
              top: `${Math.random() * 100}%`,
              animationDelay: `${Math.random() * 5}s`,
              opacity: 0.1 + Math.random() * 0.4
@@ -39,9 +39,7 @@
               @focus="focusInput('username')"
               @blur="blurInput('username')"
             />
-            <span v-if="usernameError" class="error-message">{{
-              usernameError
-            }}</span>
+            <span v-if="usernameError" class="error-message">{{ usernameError }}</span>
           </div>
 
           <div class="form-group">
@@ -53,9 +51,7 @@
               @focus="focusInput('password')"
               @blur="blurInput('password')"
             />
-            <span v-if="passwordError" class="error-message">{{
-              passwordError
-            }}</span>
+            <span v-if="passwordError" class="error-message">{{ passwordError }}</span>
           </div>
 
           <div class="button-group">
@@ -76,19 +72,23 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { login } from '@/api/stu-auth'
 
 const router = useRouter()
 
-const username = ref('')
-const password = ref('')
-const usernameError = ref('')
-const passwordError = ref('')
-const isSubmitting = ref(false)
+const username = ref<string>('')
+const password = ref<string>('')
+const usernameError = ref<string>('')
+const passwordError = ref<string>('')
+const isSubmitting = ref<boolean>(false)
 
-const handleLogin = () => {
+// 登录处理逻辑
+const handleLogin = async () => {
+  // 清空错误信息
   usernameError.value = ''
   passwordError.value = ''
 
+  // 校验输入
   if (!username.value.trim()) {
     usernameError.value = '邮箱不能为空'
     return
@@ -98,32 +98,43 @@ const handleLogin = () => {
     return
   }
 
+  // 设置提交状态
   isSubmitting.value = true
-  setTimeout(() => {
-    console.log('Login attempt:', {
-      username: username.value,
-      password: password.value,
-    })
+  try {
+    const response = await login(username.value, password.value)
+    // 假设后端返回的格式是 { code: 1 或 0, message: string }
+    if (response.code === 1) {
+      console.log('登录成功:', response)
+      localStorage.setItem('token', response.data?.accessToken || '')
+      router.push('/student')
+    } else {
+      console.error('登录失败:', response.message)
+      passwordError.value = response.message || '登录失败，请稍后再试'
+    }
+  } catch (error) {
+    console.error('登录失败:', error)
+    passwordError.value = '服务器错误，请稍后再试'
+  } finally {
     isSubmitting.value = false
-  }, 2000)
+  }
 }
 
+// 注册按钮点击事件
 const handleRegister = () => {
   router.push('/stuRegister')
 }
 
-const focusInput = (type) => {
-  if (type === 'username') {
-    usernameError.value = ''
-  } else if (type === 'password') {
-    passwordError.value = ''
-  }
+// 输入框聚焦与失去焦点事件
+const focusInput = (field) => {
+  if (field === 'username') usernameError.value = ''
+  if (field === 'password') passwordError.value = ''
 }
 
-const blurInput = (type) => {
-  if (type === 'username' && !username.value.trim()) {
+const blurInput = (field) => {
+  if (field === 'username' && !username.value.trim()) {
     usernameError.value = '邮箱不能为空'
-  } else if (type === 'password' && !password.value.trim()) {
+  }
+  if (field === 'password' && !password.value.trim()) {
     passwordError.value = '密码不能为空'
   }
 }

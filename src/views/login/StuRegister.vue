@@ -1,6 +1,6 @@
 <template>
   <div class="register-container">
-    <!-- Abstract background elements -->
+    <!-- 背景元素 -->
     <div class="background-elements">
       <div class="circle circle-1"></div>
       <div class="circle circle-2"></div>
@@ -9,11 +9,11 @@
       <div class="wave wave-2"></div>
     </div>
 
-    <!-- Floating particles -->
+    <!-- 浮动粒子 -->
     <div class="particles">
-      <div v-for="n in 20" :key="n" class="particle" 
-           :style="{ 
-             left: `${Math.random() * 100}%`, 
+      <div v-for="n in 20" :key="n" class="particle"
+           :style="{
+             left: `${Math.random() * 100}%`,
              top: `${Math.random() * 100}%`,
              animationDelay: `${Math.random() * 5}s`,
              opacity: 0.1 + Math.random() * 0.4
@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <!-- Main content card -->
+    <!-- 主内容卡片 -->
     <div class="content-wrapper">
       <div class="content-card">
         <div class="header">
@@ -44,31 +44,64 @@
             <span v-if="nameError" class="error-message">{{ nameError }}</span>
           </div>
 
-          <!-- 学院 -->
+          <!-- 学院选择 -->
           <div class="form-group">
             <label for="college">学院</label>
-            <input
-              id="college"
-              v-model="college"
-              type="text"
-              placeholder="请输入您的学院"
-              @focus="focusInput('college')"
-              @blur="blurInput('college')"
-            />
+            <div class="select-wrapper">
+              <select
+                id="college"
+                v-model="selectedCollege"
+                @click="handleCollegeClick"
+                @change="handleCollegeChange"
+                @focus="focusInput('college')"
+                @blur="blurInput('college')"
+              >
+                <option value="">请选择学院</option>
+                <option 
+                  v-for="college in colleges" 
+                  :key="college.id" 
+                  :value="college.name">
+                  {{ college.name }}
+                </option>
+              </select>
+              <div class="select-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
             <span v-if="collegeError" class="error-message">{{ collegeError }}</span>
           </div>
 
-          <!-- 班级 -->
+          <!-- 班级选择 -->
           <div class="form-group">
             <label for="class">班级</label>
-            <input
-              id="class"
-              v-model="studentClass"
-              type="text"
-              placeholder="请输入您的班级"
-              @focus="focusInput('class')"
-              @blur="blurInput('class')"
-            />
+            <div class="select-wrapper">
+              <select
+                id="class"
+                v-model="selectedClass"
+                @focus="focusInput('class')"
+                @blur="blurInput('class')"
+                :disabled="!selectedCollege"
+              >
+                <option value="">请选择班级</option>
+                <option 
+                  v-for="cls in classes" 
+                  :key="cls.id" 
+                  :value="cls.name">
+                  {{ cls.name }}
+                </option>
+              </select>
+              <div class="select-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
             <span v-if="classError" class="error-message">{{ classError }}</span>
           </div>
 
@@ -113,7 +146,8 @@
                 @blur="blurInput('captcha')"
                 style="flex: 1;"
               />
-              <button @click.stop="sendCaptcha" :disabled="captchaButtonDisabled" class="captcha-button">
+              <button type="button" @click.prevent="sendToEmail" 
+                      :disabled="captchaButtonDisabled" class="captcha-button">
                 {{ captchaButtonText }}
               </button>
             </div>
@@ -129,7 +163,9 @@
 
         <div class="login-link">
           已有账号？
-          <button @click="navigateToLogin" class="login-button">去登录</button>
+          <button type="button" @click="navigateToLogin" class="login-button">
+            去登录
+          </button>
         </div>
       </div>
     </div>
@@ -137,30 +173,103 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { register, sendCaptcha, getColleges, getClassesByCollege } from '@/api/stu-register'
 
 const router = useRouter()
 
+// 表单数据
 const name = ref('')
 const email = ref('')
 const password = ref('')
-const college = ref('')
-const studentClass = ref('')
+const captcha = ref('')
+const selectedCollege = ref('') // 绑定学院名称（后端接口按学院名称查询班级）
+const selectedClass = ref('')   // 绑定班级名称
+
+// 错误信息
 const nameError = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 const collegeError = ref('')
 const classError = ref('')
 const captchaError = ref('')
+
+// 验证码相关
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
-const captcha = ref('')
 const captchaButtonDisabled = ref(false)
 const captchaButtonText = ref('获取验证码')
-const captchaTimer = ref(null)
+let captchaTimer = null
 
-const handleRegister = () => {
+// 学院和班级列表
+const colleges = ref([])
+const classes = ref([])
+
+// 获取学院列表（注意返回的数据格式：{ code: 1, message: null, data: [...] }）
+const fetchColleges = async () => {
+  try {
+    const response = await getColleges()
+    console.log('获取学院数据：', response)
+    // 此处假设 getColleges 已返回数组，如 [ { id: 1, name: '梅努斯国际工程学院' }, ... ]
+    if (Array.isArray(response)) {
+      colleges.value = response
+    } else {
+      // 如果接口返回的是对象，取其 data 字段
+      colleges.value = response.data || []
+    }
+  } catch (error) {
+    console.error('获取学院列表失败:', error)
+    colleges.value = []
+  }
+}
+
+// 点击学院下拉框时触发请求
+const handleCollegeClick = () => {
+  if (!colleges.value.length) {
+    fetchColleges()
+  }
+}
+
+// 选中学院后获取对应班级列表
+const handleCollegeChange = async () => {
+  // 重置班级选择及班级列表
+  selectedClass.value = ''
+  classes.value = []
+  if (!selectedCollege.value) return
+  
+  try {
+    const response = await getClassesByCollege(selectedCollege.value)
+    console.log('获取班级数据：', response)
+    if (Array.isArray(response)) {
+      classes.value = response
+    } else {
+      classes.value = response.data || []
+    }
+  } catch (error) {
+    console.error('获取班级列表失败:', error)
+    classes.value = []
+  }
+}
+
+// 使用 watch 监听学院变化（可选，或在 @change 中调用 handleCollegeChange）
+watch(selectedCollege, (newVal) => {
+  if (newVal) {
+    handleCollegeChange()
+  } else {
+    classes.value = []
+    selectedClass.value = ''
+  }
+})
+
+// 组件加载时自动请求学院数据
+onMounted(() => {
+  fetchColleges()
+})
+
+// 表单提交
+const handleRegister = async () => {
+  // 清空错误信息
   nameError.value = ''
   emailError.value = ''
   passwordError.value = ''
@@ -168,11 +277,11 @@ const handleRegister = () => {
   classError.value = ''
   captchaError.value = ''
 
+  // 简单校验
   if (!name.value.trim()) {
     nameError.value = '姓名不能为空'
     return
   }
-
   if (!email.value.trim()) {
     emailError.value = '邮箱不能为空'
     return
@@ -181,7 +290,6 @@ const handleRegister = () => {
     emailError.value = '请输入有效的邮箱地址'
     return
   }
-
   if (!password.value.trim()) {
     passwordError.value = '密码不能为空'
     return
@@ -190,44 +298,40 @@ const handleRegister = () => {
     passwordError.value = '密码至少需要6位'
     return
   }
-
-  if (!college.value.trim()) {
-    collegeError.value = '学院不能为空'
+  if (!selectedCollege.value) {
+    collegeError.value = '请选择学院'
     return
   }
-
-  if (!studentClass.value.trim()) {
-    classError.value = '班级不能为空'
+  if (!selectedClass.value) {
+    classError.value = '请选择班级'
     return
   }
-
   if (!captcha.value.trim()) {
     captchaError.value = '验证码不能为空'
     return
   }
 
-  // 模拟注册提交
   isSubmitting.value = true
-  setTimeout(() => {
-    console.log('Register attempt:', {
+  try {
+    const response = await register({
       name: name.value,
       email: email.value,
       password: password.value,
-      college: college.value,
-      class: studentClass.value
+      college: selectedCollege.value,
+      studentClass: selectedClass.value,
+      captcha: captcha.value,
     })
-    // 注册成功逻辑
+    console.log('注册成功:', response)
     showSuccess.value = true
-    isSubmitting.value = false
-    // 这里可以添加跳转到登录页面的逻辑
     setTimeout(() => {
       router.push('/stulogin')
     }, 2000)
-  }, 2000)
-}
-
-const navigateToLogin = () => {
-  router.push('/stulogin')
+  } catch (error) {
+    console.error('注册失败:', error)
+    captchaError.value = error.message || '注册失败，请检查验证码或稍后重试'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const isValidEmail = (email) => {
@@ -236,19 +340,12 @@ const isValidEmail = (email) => {
 }
 
 const focusInput = (type) => {
-  if (type === 'name') {
-    nameError.value = ''
-  } else if (type === 'email') {
-    emailError.value = ''
-  } else if (type === 'password') {
-    passwordError.value = ''
-  } else if (type === 'college') {
-    collegeError.value = ''
-  } else if (type === 'class') {
-    classError.value = ''
-  } else if (type === 'captcha') {
-    captchaError.value = ''
-  }
+  if (type === 'name') nameError.value = ''
+  else if (type === 'email') emailError.value = ''
+  else if (type === 'password') passwordError.value = ''
+  else if (type === 'college') collegeError.value = ''
+  else if (type === 'class') classError.value = ''
+  else if (type === 'captcha') captchaError.value = ''
 }
 
 const blurInput = (type) => {
@@ -262,17 +359,16 @@ const blurInput = (type) => {
     passwordError.value = '密码不能为空'
   } else if (type === 'password' && password.value.length < 6) {
     passwordError.value = '密码至少需要6位'
-  } else if (type === 'college' && !college.value.trim()) {
-    collegeError.value = '学院不能为空'
-  } else if (type === 'class' && !studentClass.value.trim()) {
-    classError.value = '班级不能为空'
+  } else if (type === 'college' && !selectedCollege.value) {
+    collegeError.value = '请选择学院'
+  } else if (type === 'class' && !selectedClass.value) {
+    classError.value = '请选择班级'
   } else if (type === 'captcha' && !captcha.value.trim()) {
     captchaError.value = '验证码不能为空'
   }
 }
 
-// 发送验证码逻辑
-const sendCaptcha = () => {
+const sendToEmail = () => {
   if (!email.value.trim()) {
     emailError.value = '邮箱不能为空'
     return
@@ -281,37 +377,35 @@ const sendCaptcha = () => {
     emailError.value = '请输入有效的邮箱地址'
     return
   }
-
-  // 模拟发送验证码
   captchaButtonDisabled.value = true
   captchaButtonText.value = '发送中...'
-  setTimeout(() => {
-    // 模拟生成验证码
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let code = ''
-    for (let i = 0; i < 4; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    storedCaptcha.value = code
-    console.log('验证码已发送:', code)
-
-    // 倒计时60秒
-    let count = 60
-    captchaButtonText.value = `${count}秒后重试`
-    captchaTimer.value = setInterval(() => {
-      count--
-      if (count <= 0) {
-        clearInterval(captchaTimer.value)
-        captchaButtonDisabled.value = false
-        captchaButtonText.value = '获取验证码'
-      } else {
-        captchaButtonText.value = `${count}秒后重试`
-      }
-    }, 1000)
-  }, 2000)
+  sendCaptcha(email.value)
+    .then((response) => {
+      console.log('验证码发送成功:', response)
+      let count = 60
+      captchaButtonText.value = `${count}秒后重试`
+      captchaTimer = setInterval(() => {
+        count--
+        if (count <= 0) {
+          clearInterval(captchaTimer)
+          captchaButtonDisabled.value = false
+          captchaButtonText.value = '获取验证码'
+        } else {
+          captchaButtonText.value = `${count}秒后重试`
+        }
+      }, 1000)
+    })
+    .catch((error) => {
+      console.error('验证码发送失败:', error)
+      alert(error.response?.data?.message || '验证码发送失败，请稍后再试')
+      captchaButtonDisabled.value = false
+      captchaButtonText.value = '获取验证码'
+    })
 }
 
-const storedCaptcha = ref('')
+const navigateToLogin = () => {
+  router.push('/stulogin')
+}
 </script>
 
 <style scoped>
@@ -492,7 +586,8 @@ const storedCaptcha = ref('')
   display: block;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 0.75rem 1rem;
   border: 2px solid #e5e7eb;
   border-radius: 30px;
@@ -501,10 +596,68 @@ const storedCaptcha = ref('')
   background: rgba(255, 255, 255, 0.9);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: #4169e1;
   box-shadow: 0 0 0 4px rgba(65, 105, 225, 0.1);
+}
+
+/* 增强的下拉菜单样式 */
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  color: #4a5568;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #e5e7eb;
+  border-radius: 30px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.select-wrapper select:focus {
+  outline: none;
+  border-color: #4169e1;
+  box-shadow: 0 0 0 4px rgba(65, 105, 225, 0.1);
+}
+
+.select-wrapper select option {
+  background: white;
+  color: #4a5568;
+  padding: 10px;
+}
+
+.select-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #4169e1;
+  transition: transform 0.3s ease;
+}
+
+.select-wrapper select:focus + .select-icon {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* 下拉菜单悬停效果 */
+.select-wrapper:hover select {
+  border-color: #4169e1;
+}
+
+.select-wrapper:hover .select-icon {
+  color: #3157d5;
 }
 
 .error-message {
