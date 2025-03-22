@@ -101,19 +101,19 @@ const handleLogin = async () => {
   // 设置提交状态
   isSubmitting.value = true
   try {
-    const response = await login(username.value, password.value)
-    // 假设后端返回的格式是 { code: 1 或 0, message: string }
-    if (response.code === 1) {
-      console.log('登录成功:', response)
-      localStorage.setItem('token', response.data?.accessToken || '')
-      router.push('/student')
-    } else {
-      console.error('登录失败:', response.message)
-      passwordError.value = response.message || '登录失败，请稍后再试'
-    }
+    const data = await login(username.value, password.value)
+    // 如果登录成功，data 中应该包含 token 等信息
+    console.log('登录成功:', data)
+    localStorage.setItem('token', data?.accessToken || '')
+    router.push('/student')
   } catch (error) {
+    // 处理登录失败的情况
     console.error('登录失败:', error)
-    passwordError.value = '服务器错误，请稍后再试'
+    if (error instanceof Error) {
+      passwordError.value = error.message || '登录失败，请稍后再试'
+    } else {
+      passwordError.value = '登录失败，请稍后再试'
+    }
   } finally {
     isSubmitting.value = false
   }
@@ -139,7 +139,6 @@ const blurInput = (field) => {
   }
 }
 </script>
-
 <style scoped>
 @import '@/style/global.css';
 

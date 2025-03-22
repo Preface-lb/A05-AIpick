@@ -107,16 +107,16 @@
 
           <!-- 邮箱 -->
           <div class="form-group">
-            <label for="email">邮箱</label>
+            <label for="username">邮箱</label>
             <input
-              id="email"
-              v-model="email"
-              type="email"
+              id="username"
+              v-model="username"
+              type="username"
               placeholder="请输入您的邮箱"
-              @focus="focusInput('email')"
-              @blur="blurInput('email')"
+              @focus="focusInput('username')"
+              @blur="blurInput('username')"
             />
-            <span v-if="emailError" class="error-message">{{ emailError }}</span>
+            <span v-if="usernameError" class="error-message">{{ usernameError }}</span>
           </div>
 
           <!-- 密码 -->
@@ -146,7 +146,7 @@
                 @blur="blurInput('captcha')"
                 style="flex: 1;"
               />
-              <button type="button" @click.prevent="sendToEmail" 
+              <button type="button" @click.prevent="sendTousername" 
                       :disabled="captchaButtonDisabled" class="captcha-button">
                 {{ captchaButtonText }}
               </button>
@@ -173,239 +173,226 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { register, sendCaptcha, getColleges, getClassesByCollege } from '@/api/stu-register'
+import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { register, sendCaptcha, getColleges, getClassesByCollege } from '@/api/stu-register';
 
-const router = useRouter()
+const router = useRouter();
 
 // 表单数据
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const captcha = ref('')
-const selectedCollege = ref('') // 绑定学院名称（后端接口按学院名称查询班级）
-const selectedClass = ref('')   // 绑定班级名称
+const name = ref('');
+const username = ref('');
+const password = ref('');
+const captcha = ref('');
+const selectedCollege = ref('');
+const selectedClass = ref('');
 
 // 错误信息
-const nameError = ref('')
-const emailError = ref('')
-const passwordError = ref('')
-const collegeError = ref('')
-const classError = ref('')
-const captchaError = ref('')
+const nameError = ref('');
+const usernameError = ref('');
+const passwordError = ref('');
+const collegeError = ref('');
+const classError = ref('');
+const captchaError = ref('');
 
 // 验证码相关
-const isSubmitting = ref(false)
-const showSuccess = ref(false)
-const captchaButtonDisabled = ref(false)
-const captchaButtonText = ref('获取验证码')
-let captchaTimer = null
+const isSubmitting = ref(false);
+const showSuccess = ref(false);
+const captchaButtonDisabled = ref(false);
+const captchaButtonText = ref('获取验证码');
+let captchaTimer = null;
 
 // 学院和班级列表
-const colleges = ref([])
-const classes = ref([])
+const colleges = ref([]);
+const classes = ref([]);
 
-// 获取学院列表（注意返回的数据格式：{ code: 1, message: null, data: [...] }）
 const fetchColleges = async () => {
   try {
-    const response = await getColleges()
-    console.log('获取学院数据：', response)
-    // 此处假设 getColleges 已返回数组，如 [ { id: 1, name: '梅努斯国际工程学院' }, ... ]
-    if (Array.isArray(response)) {
-      colleges.value = response
-    } else {
-      // 如果接口返回的是对象，取其 data 字段
-      colleges.value = response.data || []
-    }
+    const response = await getColleges();
+    colleges.value = response;
   } catch (error) {
-    console.error('获取学院列表失败:', error)
-    colleges.value = []
+    console.error('获取学院列表失败:', error);
+    colleges.value = [];
   }
-}
+};
 
 // 点击学院下拉框时触发请求
 const handleCollegeClick = () => {
-  if (!colleges.value.length) {
-    fetchColleges()
-  }
-}
+  fetchColleges();
+};
 
 // 选中学院后获取对应班级列表
 const handleCollegeChange = async () => {
-  // 重置班级选择及班级列表
-  selectedClass.value = ''
-  classes.value = []
-  if (!selectedCollege.value) return
-  
-  try {
-    const response = await getClassesByCollege(selectedCollege.value)
-    console.log('获取班级数据：', response)
-    if (Array.isArray(response)) {
-      classes.value = response
-    } else {
-      classes.value = response.data || []
-    }
-  } catch (error) {
-    console.error('获取班级列表失败:', error)
-    classes.value = []
-  }
-}
+  selectedClass.value = '';
+  classes.value = [];
+  if (!selectedCollege.value) return;
 
-// 使用 watch 监听学院变化（可选，或在 @change 中调用 handleCollegeChange）
+  try {
+    const response = await getClassesByCollege(selectedCollege.value);
+    classes.value = response;
+  } catch (error) {
+    console.error('获取班级列表失败:', error);
+    classes.value = [];
+  }
+};
+
+// 使用 watch 监听学院变化
 watch(selectedCollege, (newVal) => {
   if (newVal) {
-    handleCollegeChange()
+    handleCollegeChange();
   } else {
-    classes.value = []
-    selectedClass.value = ''
+    classes.value = [];
+    selectedClass.value = '';
   }
-})
+});
 
 // 组件加载时自动请求学院数据
 onMounted(() => {
-  fetchColleges()
-})
+  fetchColleges();
+});
 
 // 表单提交
 const handleRegister = async () => {
   // 清空错误信息
-  nameError.value = ''
-  emailError.value = ''
-  passwordError.value = ''
-  collegeError.value = ''
-  classError.value = ''
-  captchaError.value = ''
+  nameError.value = '';
+  usernameError.value = '';
+  passwordError.value = '';
+  collegeError.value = '';
+  classError.value = '';
+  captchaError.value = '';
 
   // 简单校验
   if (!name.value.trim()) {
-    nameError.value = '姓名不能为空'
-    return
+    nameError.value = '姓名不能为空';
+    return;
   }
-  if (!email.value.trim()) {
-    emailError.value = '邮箱不能为空'
-    return
+  if (!username.value.trim()) {
+    usernameError.value = '邮箱不能为空';
+    return;
   }
-  if (!isValidEmail(email.value)) {
-    emailError.value = '请输入有效的邮箱地址'
-    return
+  if (!isValidusername(username.value)) {
+    usernameError.value = '请输入有效的邮箱地址';
+    return;
   }
   if (!password.value.trim()) {
-    passwordError.value = '密码不能为空'
-    return
+    passwordError.value = '密码不能为空';
+    return;
   }
   if (password.value.length < 6) {
-    passwordError.value = '密码至少需要6位'
-    return
+    passwordError.value = '密码至少需要6位';
+    return;
   }
   if (!selectedCollege.value) {
-    collegeError.value = '请选择学院'
-    return
+    collegeError.value = '请选择学院';
+    return;
   }
   if (!selectedClass.value) {
-    classError.value = '请选择班级'
-    return
+    classError.value = '请选择班级';
+    return;
   }
   if (!captcha.value.trim()) {
-    captchaError.value = '验证码不能为空'
-    return
+    captchaError.value = '验证码不能为空';
+    return;
   }
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
     const response = await register({
       name: name.value,
-      email: email.value,
+      username: username.value,
       password: password.value,
       college: selectedCollege.value,
       studentClass: selectedClass.value,
       captcha: captcha.value,
-    })
-    console.log('注册成功:', response)
-    showSuccess.value = true
+    });
+    showSuccess.value = true;
     setTimeout(() => {
-      router.push('/stulogin')
-    }, 2000)
+      router.push('/stulogin');
+    }, 2000);
   } catch (error) {
-    console.error('注册失败:', error)
-    captchaError.value = error.message || '注册失败，请检查验证码或稍后重试'
+    console.error('注册失败:', error);
+    if (error instanceof Error) {
+      captchaError.value = error.message || '注册失败，请检查验证码或稍后重试';
+    } else {
+      captchaError.value = '注册失败，请稍后再试';
+    }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
-}
+};
 
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+const isValidusername = (username) => {
+  const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return usernameRegex.test(username);
+};
 
 const focusInput = (type) => {
-  if (type === 'name') nameError.value = ''
-  else if (type === 'email') emailError.value = ''
-  else if (type === 'password') passwordError.value = ''
-  else if (type === 'college') collegeError.value = ''
-  else if (type === 'class') classError.value = ''
-  else if (type === 'captcha') captchaError.value = ''
-}
+  if (type === 'name') nameError.value = '';
+  else if (type === 'username') usernameError.value = '';
+  else if (type === 'password') passwordError.value = '';
+  else if (type === 'college') collegeError.value = '';
+  else if (type === 'class') classError.value = '';
+  else if (type === 'captcha') captchaError.value = '';
+};
 
 const blurInput = (type) => {
   if (type === 'name' && !name.value.trim()) {
-    nameError.value = '姓名不能为空'
-  } else if (type === 'email' && !email.value.trim()) {
-    emailError.value = '邮箱不能为空'
-  } else if (type === 'email' && !isValidEmail(email.value)) {
-    emailError.value = '请输入有效的邮箱地址'
+    nameError.value = '姓名不能为空';
+  } else if (type === 'username' && !username.value.trim()) {
+    usernameError.value = '邮箱不能为空';
+  } else if (type === 'username' && !isValidusername(username.value)) {
+    usernameError.value = '请输入有效的邮箱地址';
   } else if (type === 'password' && !password.value.trim()) {
-    passwordError.value = '密码不能为空'
+    passwordError.value = '密码不能为空';
   } else if (type === 'password' && password.value.length < 6) {
-    passwordError.value = '密码至少需要6位'
+    passwordError.value = '密码至少需要6位';
   } else if (type === 'college' && !selectedCollege.value) {
-    collegeError.value = '请选择学院'
+    collegeError.value = '请选择学院';
   } else if (type === 'class' && !selectedClass.value) {
-    classError.value = '请选择班级'
+    classError.value = '请选择班级';
   } else if (type === 'captcha' && !captcha.value.trim()) {
-    captchaError.value = '验证码不能为空'
+    captchaError.value = '验证码不能为空';
   }
-}
+};
 
-const sendToEmail = () => {
-  if (!email.value.trim()) {
-    emailError.value = '邮箱不能为空'
-    return
+const sendTousername = () => {
+  if (!username.value.trim()) {
+    usernameError.value = '邮箱不能为空';
+    return;
   }
-  if (!isValidEmail(email.value)) {
-    emailError.value = '请输入有效的邮箱地址'
-    return
+  if (!isValidusername(username.value)) {
+    usernameError.value = '请输入有效的邮箱地址';
+    return;
   }
-  captchaButtonDisabled.value = true
-  captchaButtonText.value = '发送中...'
-  sendCaptcha(email.value)
-    .then((response) => {
-      console.log('验证码发送成功:', response)
-      let count = 60
-      captchaButtonText.value = `${count}秒后重试`
+  captchaButtonDisabled.value = true;
+  captchaButtonText.value = '发送中...';
+  sendCaptcha(username.value)
+    .then((captcha) => {
+      console.log('验证码发送成功:', captcha);
+      let count = 120;
+      captchaButtonText.value = `${count}秒后重试`;
       captchaTimer = setInterval(() => {
-        count--
+        count--;
         if (count <= 0) {
-          clearInterval(captchaTimer)
-          captchaButtonDisabled.value = false
-          captchaButtonText.value = '获取验证码'
+          clearInterval(captchaTimer);
+          captchaButtonDisabled.value = false;
+          captchaButtonText.value = '获取验证码';
         } else {
-          captchaButtonText.value = `${count}秒后重试`
+          captchaButtonText.value = `${count}秒后重试`;
         }
-      }, 1000)
+      }, 1800);
     })
     .catch((error) => {
-      console.error('验证码发送失败:', error)
-      alert(error.response?.data?.message || '验证码发送失败，请稍后再试')
-      captchaButtonDisabled.value = false
-      captchaButtonText.value = '获取验证码'
-    })
-}
+      console.error('验证码发送失败:', error);
+      alert(error.message || '验证码发送失败，请稍后再试');
+      captchaButtonDisabled.value = false;
+      captchaButtonText.value = '获取验证码';
+    });
+};
 
 const navigateToLogin = () => {
-  router.push('/stulogin')
-}
+  router.push('/stulogin');
+};
 </script>
 
 <style scoped>
