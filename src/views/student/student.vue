@@ -13,20 +13,7 @@
       </div>
       <div class="header-right">
         <div class="header-actions">
-          <button class="action-button">
-            <i class="icon"><settings-icon /></i>
-          </button>
-          <div class="user-dropdown">
-            <div class="avatar-container">
-              <img :src="userAvatar" alt="User" class="avatar-img" />
-              <span class="status-indicator"></span>
-            </div>
-            <div class="user-info">
-              <span class="username">{{ userName }}</span>
-              <span class="user-role">{{ userRole }}</span>
-            </div>
-            <i class="icon dropdown-icon"><chevron-down-icon /></i>
-          </div>
+          
         </div>
       </div>
     </header>
@@ -72,11 +59,34 @@
                   <span class="nav-indicator" v-if="activeIndex === '2'"></span>
                 </button>
               </li>
+              <li class="nav-item" :class="{ 'active': activeIndex === '3' }">
+                <button @click="handleSelect('3')" class="nav-link">
+                  <div class="nav-icon">
+                    <i class="icon"><user-icon /></i>
+                  </div>
+                  <transition name="fade">
+                    <span class="nav-text" v-if="!collapsed">个人中心</span>
+                  </transition>
+                  <span class="nav-indicator" v-if="activeIndex === '3'"></span>
+                </button>
+              </li>
+              <!-- 新增反馈中心菜单项 -->
+              <li class="nav-item" :class="{ 'active': activeIndex === '4' }">
+                <button @click="handleSelect('4')" class="nav-link">
+                  <div class="nav-icon">
+                    <i class="icon"><message-square-icon /></i>
+                  </div>
+                  <transition name="fade">
+                    <span class="nav-text" v-if="!collapsed">反馈中心</span>
+                  </transition>
+                  <span class="nav-indicator" v-if="activeIndex === '4'"></span>
+                </button>
+              </li>
             </ul>
           </nav>
 
           <div class="sidebar-footer" v-if="!collapsed">
-            <button class="logout-button">
+            <button class="logout-button" @click="handleLogout">
               <i class="icon"><log-out-icon /></i>
               <span>退出登录</span>
             </button>
@@ -106,9 +116,13 @@
 </template>
 
 <script setup>
+import { useRouter, useRoute } from 'vue-router';
 import { ref, computed, onMounted, h } from 'vue';
+import { getUserInfo } from '@/api/student';
 import Notifications from '@/views/student/stumain/Notifications.vue';
 import Stuclass from '@/views/student/stumain/Stuclass.vue';
+import StuProfile from '@/views/student/stumain/StuProfile.vue'; 
+import Stufeedback from '@/views/student/stumain/Stufeedback.vue'; 
 
 // Icons (using SVG for better quality)
 const BellIcon = () => h('svg', { 
@@ -141,6 +155,37 @@ const CalendarIcon = () => h('svg', {
   h('line', { x1: '16', y1: '2', x2: '16', y2: '6' }),
   h('line', { x1: '8', y1: '2', x2: '8', y2: '6' }),
   h('line', { x1: '3', y1: '10', x2: '21', y2: '10' })
+]);
+
+// 用户图标
+const UserIcon = () => h('svg', { 
+  xmlns: 'http://www.w3.org/2000/svg', 
+  width: '20', 
+  height: '20', 
+  viewBox: '0 0 24 24', 
+  fill: 'none', 
+  stroke: 'currentColor', 
+  strokeWidth: '2', 
+  strokeLinecap: 'round', 
+  strokeLinejoin: 'round' 
+}, [
+  h('path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }),
+  h('circle', { cx: '12', cy: '7', r: '4' })
+]);
+
+// 新增反馈图标
+const MessageSquareIcon = () => h('svg', { 
+  xmlns: 'http://www.w3.org/2000/svg', 
+  width: '20', 
+  height: '20', 
+  viewBox: '0 0 24 24', 
+  fill: 'none', 
+  stroke: 'currentColor', 
+  strokeWidth: '2', 
+  strokeLinecap: 'round', 
+  strokeLinejoin: 'round' 
+}, [
+  h('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
 ]);
 
 const ChevronDownIcon = () => h('svg', { 
@@ -213,14 +258,17 @@ const collapsed = ref(false);
 const isMobile = ref(false);
 
 // User data
-const userName = ref('学生姓名');
-const userClass = ref('2024级计算机科学班');
-const userRole = ref('学生');
+const userName = ref();
+const userClass = ref();
 const userAvatar = ref(require('@/assets/PIC/stupic.png'));
 
 // Computed properties
 const pageTitle = computed(() => {
-  return activeIndex.value === '1' ? '通知公告' : '课程表';
+  if (activeIndex.value === '1') return '通知公告';
+  if (activeIndex.value === '2') return '课程表';
+  if (activeIndex.value === '3') return '个人中心';
+  if (activeIndex.value === '4') return '反馈中心';
+  return '';
 });
 
 // Methods
@@ -230,6 +278,10 @@ const handleSelect = (index) => {
     currentComponent.value = Notifications;
   } else if (index === '2') {
     currentComponent.value = Stuclass;
+  } else if (index === '3') {
+    currentComponent.value = StuProfile;
+  } else if (index === '4') {
+    currentComponent.value = Stufeedback;
   }
 };
 
@@ -258,6 +310,32 @@ onMounted(() => {
     window.removeEventListener('resize', checkIfMobile);
   };
 });
+
+// 获取用户信息
+const fetchStudentInfo = async () => {
+  try {
+    const response = await getUserInfo();
+    userName.value = response.name || '学生姓名';
+    userClass.value = response.class || '2024级计算机科学班';
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+  }
+};
+
+onMounted(() => {
+  fetchStudentInfo();
+});
+
+// 退出登录
+const router = useRouter();
+
+const handleLogout = () => {
+
+  router.push('/'); 
+};
+
+
+
 </script>
 
 <style scoped>
@@ -275,7 +353,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* Header Styles */
+
 .header {
   height: 70px;
   background: linear-gradient(135deg, #1e40af, #3b82f6);
@@ -372,38 +450,6 @@ onMounted(() => {
   gap: 12px;
 }
 
-.action-button {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-
-.action-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(0);
-  border-radius: 50%;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.action-button:hover::before {
-  transform: scale(2);
-}
 
 .user-dropdown {
   display: flex;

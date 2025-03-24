@@ -75,6 +75,20 @@
             <span v-if="collegeError" class="error-message">{{ collegeError }}</span>
           </div>
 
+          <!-- 年级输入 -->
+          <div class="form-group">
+            <label for="grade">年级</label>
+            <input
+              id="grade"
+              v-model="grade"
+              type="text"
+              placeholder="请输入年级，如2024"
+              @focus="focusInput('grade')"
+              @blur="blurInput('grade')"
+            />
+            <span v-if="gradeError" class="error-message">{{ gradeError }}</span>
+          </div>
+
           <!-- 班级选择 -->
           <div class="form-group">
             <label for="class">班级</label>
@@ -186,6 +200,7 @@ const password = ref('');
 const captcha = ref('');
 const selectedCollege = ref('');
 const selectedClass = ref('');
+const grade = ref(''); // 新增年级字段
 
 // 错误信息
 const nameError = ref('');
@@ -194,6 +209,7 @@ const passwordError = ref('');
 const collegeError = ref('');
 const classError = ref('');
 const captchaError = ref('');
+const gradeError = ref(''); // 新增年级错误信息
 
 // 验证码相关
 const isSubmitting = ref(false);
@@ -260,6 +276,7 @@ const handleRegister = async () => {
   collegeError.value = '';
   classError.value = '';
   captchaError.value = '';
+  gradeError.value = ''; // 清空年级错误信息
 
   // 简单校验
   if (!name.value.trim()) {
@@ -286,6 +303,14 @@ const handleRegister = async () => {
     collegeError.value = '请选择学院';
     return;
   }
+  if (!grade.value.trim()) {
+    gradeError.value = '请输入年级';
+    return;
+  }
+  if (!isValidGrade(grade.value)) {
+    gradeError.value = '请输入有效的年级，如2024';
+    return;
+  }
   if (!selectedClass.value) {
     classError.value = '请选择班级';
     return;
@@ -302,8 +327,9 @@ const handleRegister = async () => {
       username: username.value,
       password: password.value,
       college: selectedCollege.value,
+      grade: grade.value, // 添加年级字段
       studentClass: selectedClass.value,
-      captcha: captcha.value,
+      code: captcha.value,
     });
     showSuccess.value = true;
     setTimeout(() => {
@@ -326,6 +352,13 @@ const isValidusername = (username) => {
   return usernameRegex.test(username);
 };
 
+// 验证年级是否有效
+const isValidGrade = (grade) => {
+  // 简单验证是否为4位数字年份
+  const gradeRegex = /^\d{4}$/;
+  return gradeRegex.test(grade);
+};
+
 const focusInput = (type) => {
   if (type === 'name') nameError.value = '';
   else if (type === 'username') usernameError.value = '';
@@ -333,6 +366,7 @@ const focusInput = (type) => {
   else if (type === 'college') collegeError.value = '';
   else if (type === 'class') classError.value = '';
   else if (type === 'captcha') captchaError.value = '';
+  else if (type === 'grade') gradeError.value = ''; // 添加年级字段处理
 };
 
 const blurInput = (type) => {
@@ -348,6 +382,10 @@ const blurInput = (type) => {
     passwordError.value = '密码至少需要6位';
   } else if (type === 'college' && !selectedCollege.value) {
     collegeError.value = '请选择学院';
+  } else if (type === 'grade' && !grade.value.trim()) {
+    gradeError.value = '请输入年级';
+  } else if (type === 'grade' && !isValidGrade(grade.value)) {
+    gradeError.value = '请输入有效的年级，如2024';
   } else if (type === 'class' && !selectedClass.value) {
     classError.value = '请选择班级';
   } else if (type === 'captcha' && !captcha.value.trim()) {
@@ -503,13 +541,13 @@ const navigateToLogin = () => {
 .content-card {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border-radius: 1.5rem;
+  border-radius: 5rem;
   box-shadow: 
     0 10px 15px -3px rgba(0, 0, 0, 0.05),
     0 4px 6px -2px rgba(0, 0, 0, 0.025),
     0 0 0 1px rgba(255, 255, 255, 0.8) inset,
     0 20px 25px -5px rgba(59, 130, 246, 0.05);
-  padding: 2.5rem;
+  padding: 1.2rem;
   width: 100%;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transform: rotateX(0deg);
@@ -528,11 +566,11 @@ const navigateToLogin = () => {
 /* Header styles */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .header h1 {
-  font-size: 2.6rem;
+  font-size: 2rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -545,7 +583,7 @@ const navigateToLogin = () => {
 
 .header p {
   color: #64748b;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 500;
   font-family: 'ZCOOLXiaoWei', sans-serif;
 }
@@ -555,7 +593,7 @@ const navigateToLogin = () => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .form-group {

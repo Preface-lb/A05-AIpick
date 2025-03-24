@@ -104,7 +104,7 @@ const handleLogin = async () => {
     const data = await login(username.value, password.value)
     // 如果登录成功，data 中应该包含 token 等信息
     console.log('登录成功:', data)
-    localStorage.setItem('token', data?.accessToken || '')
+    localStorage.setItem('token', data?.token || '')
     router.push('/student')
   } catch (error) {
     // 处理登录失败的情况

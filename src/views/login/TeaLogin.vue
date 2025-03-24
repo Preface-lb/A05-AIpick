@@ -80,21 +80,21 @@ import { teacherLogin } from '@/api/tea-auth' // 引入老师登录的 API
 
 const router = useRouter()
 
-const teaUserName = ref('') // 修改此处
+const number = ref('') // 修改此处
 const password = ref('')
-const teaUserNameError = ref('') // 修改此处
+const numberError = ref('') // 修改此处
 const passwordError = ref('')
 const isSubmitting = ref(false)
 
 // 登录处理逻辑
 const handleLogin = async () => {
   // 清空错误信息
-  teaUserNameError.value = '' // 修改此处
+  numberError.value = '' // 修改此处
   passwordError.value = ''
 
   // 校验输入
-  if (!teaUserName.value.trim()) { // 修改此处
-    teaUserNameError.value = '用户名不能为空' // 修改此处
+  if (!number.value.trim()) { // 修改此处
+    numberError.value = '用户名不能为空' // 修改此处
     return
   }
   if (!password.value.trim()) {
@@ -105,7 +105,7 @@ const handleLogin = async () => {
   // 设置提交状态
   isSubmitting.value = true
   try {
-    const response = await teacherLogin({ teaUserName: teaUserName.value, password: password.value })
+    const response = await teacherLogin({ number: number.value, password: password.value })
     console.log('老师登录成功:', response)
     localStorage.setItem('token', response.data.token) // 假设后端返回的 token 在 response.data.token 中
     router.push('/teacher') // 登录成功后跳转到老师主页
@@ -119,13 +119,13 @@ const handleLogin = async () => {
 
 // 输入框聚焦与失去焦点事件
 const focusInput = (field) => {
-  if (field === 'teaUserName') teaUserNameError.value = '' // 修改此处
+  if (field === 'number') numberError.value = '' // 修改此处
   if (field === 'password') passwordError.value = ''
 }
 
 const blurInput = (field) => {
-  if (field === 'teaUserName' && !teaUserName.value.trim()) { // 修改此处
-    teaUserNameError.value = '用户名不能为空' // 修改此处
+  if (field === 'number' && !number.value.trim()) { // 修改此处
+    numberError.value = '用户名不能为空' // 修改此处
   }
   if (field === 'password' && !password.value.trim()) {
     passwordError.value = '密码不能为空'

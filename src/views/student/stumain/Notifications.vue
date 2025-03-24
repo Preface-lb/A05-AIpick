@@ -50,7 +50,7 @@
 
     <div class="pagination-container">
       <button class="pagination-button" disabled>
-        <
+        {{ '<' }}
       </button>
       <button class="pagination-number active">1</button>
       <button class="pagination-number">2</button>

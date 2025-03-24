@@ -86,7 +86,7 @@
               <div class="analysis-item" style="border-color: #22c55e">
                 <h4 class="font-medium text-slate-800 dark:text-slate-200">位置冲突 (27.4%)</h4>
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  主要由于多门课程被安排在同一教室的同一时间。
+                  主要由于连续的课程被安排在距离过远的位置。
                 </p>
               </div>
               <div class="analysis-item" style="border-color: #84cc16">

@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request from '@/utils/request'
 
 /**
  * 学生注册接口请求参数类型
@@ -8,8 +8,9 @@ interface StudentRegisterParams {
   username: string; // 邮箱
   password: string; // 密码
   college: string; // 学院名字
+  grade: string;   // 年级，如2024
   studentClass: string; // 班级名字
-  captcha: string; // 验证码
+  code: string; // 验证码
 }
 
 /**
@@ -34,7 +35,7 @@ interface SendCaptchaParams {
 interface SendCaptchaResponse {
   code: number; // 状态码
   message: string | null; // 消息，null 表示成功
-  data?: any; // 返回数据
+
 }
 
 /**
@@ -56,6 +57,15 @@ interface ClassesResponse {
 }
 
 /**
+ * 获取年级列表接口返回值类型
+ */
+interface GradesResponse {
+  code: number; // 状态码
+  message: string | null; // 消息，null 表示成功
+  data?: { id: number; name: string }[]; // 年级列表
+}
+
+/**
  * 学生注册接口
  */
 export const register = (data: StudentRegisterParams): Promise<StudentRegisterResponse> => {
@@ -64,53 +74,50 @@ export const register = (data: StudentRegisterParams): Promise<StudentRegisterRe
     method: 'post',
     data
   }).then((response) => {
-    if (response.data && typeof response.data === 'object') {
-      const { code, message, data } = response.data;
-      if (code === 1) {
-        return { code, message: message === null ? "" : message, data };
-      }
-      throw new Error(message || '注册失败');
-    }
-    throw new Error('注册失败，服务器返回数据格式错误');
+    return response.data;
   }).catch((error) => {
     console.error('注册请求失败:', error);
     throw error;
   });
 };
+/**
+ * 发送验证码接口
+ * @param username - 用户邮箱
+ * @returns Promise<string> 验证码
+ */
+/**
+ * 发送验证码接口
+ * @param username - 用户邮箱
+ * @returns Promise<string> 验证码
+ */
+/**
+ * 发送验证码接口
+ * @param username - 用户邮箱
+ * @returns Promise<string> 验证码
+ */
+/**
+ * 发送验证码接口
+ * @param username - 用户邮箱
+ * @returns Promise<string> 验证码
+ */
+export const sendCaptcha = (username: string): Promise<string> => {
+  return request({
+    url: '/student/sendCaptcha',
+    method: 'post',
+    params: { username }
+  }).then((response) => {
+    // 检查 response 是否为 null 或 undefined
+    if (!response || !response.data || typeof response.data !== 'string') {
+      throw new Error('验证码发送成功');
+    }
+    return response.data; // 返回验证码
+  }).catch((error) => {
+    console.error('发送验证码请求失败:', error);
+    throw error;
+  });
+};
 
-/** 
- * 发送验证码接口 
- * @param username - 用户邮箱 
- * @returns Promise 
- */ 
-export const sendCaptcha = (username: string): Promise<string> => { 
-  return request({ 
-    url: '/student/sendCaptcha', 
-    method: 'post', 
-    params: { username } 
-  }).then((response) => { 
-    // 检查 response.data  是否存在并且是一个对象 
-    if (response.data  && typeof response.data  === 'object') { 
-      // 检查 code 是否为 1，表示成功 
-      if (response.data.code  === 1) { 
-        // 检查 data 字段是否是一个字符串（验证码） 
-        if (typeof response.data.data  === 'string') { 
-          return response.data.data;  
-        } else { 
-          throw new Error('验证码格式错误'); 
-        } 
-      } else { 
-        // 如果 code 不是 1，抛出错误，message 中包含失败原因 
-        throw new Error(response.data.message  || '发送验证码失败'); 
-      } 
-    } else { 
-      throw new Error('服务器返回数据格式错误'); 
-    } 
-  }).catch((error) => { 
-    console.error(' 发送验证码请求失败:', error); 
-    throw error; 
-  }); 
-}; 
+
 
 /**
  * 获取学院列表接口
@@ -152,3 +159,5 @@ export const getClassesByCollege = (name: string): Promise<{ id: number; name: s
     throw error;
   });
 };
+
+
