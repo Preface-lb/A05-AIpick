@@ -104,7 +104,7 @@ const handleLogin = async () => {
     const data = await login(username.value, password.value)
     // 如果登录成功，data 中应该包含 token 等信息
     console.log('登录成功:', data)
-    localStorage.setItem('token', data?.token || '')
+    localStorage.setItem('token', data.token)
     router.push('/student')
   } catch (error) {
     // 处理登录失败的情况
@@ -116,7 +116,7 @@ const handleLogin = async () => {
     }
   } finally {
     isSubmitting.value = false
-  }
+ }
 }
 
 // 注册按钮点击事件
@@ -148,7 +148,7 @@ const blurInput = (field) => {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+   justify-content: center;
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4ecfb 100%);

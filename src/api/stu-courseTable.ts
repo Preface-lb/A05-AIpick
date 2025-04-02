@@ -1,4 +1,4 @@
-// api/courseTable.ts
+// api/stu-courseTable.ts
 import request from '@/utils/request';
 import { mockCourseTable, mockNextWeekCourseTable } from '@/mocks/courseTable';
 
@@ -23,19 +23,10 @@ interface CourseTableResponse {
 
 // 获取课程表数据
 export const getCourseTable = (whichWeek: number): Promise<CourseTableResponse['data']> => {
-  // 在开发环境中使用模拟数据
-  if (process.env.NODE_ENV === 'development') {
-    if (whichWeek === 0) {
-      return Promise.resolve(mockCourseTable.data);
-    } else {
-      return Promise.resolve(mockNextWeekCourseTable.data);
-    }
-  } else {
-    // 在生产环境中使用真实 API
-    return request({
-      url: '/student/courseTable',
-      method: 'get',
-      params: { whichWeek },
-    }) as Promise<CourseTableResponse['data']>;
-  }
+  // 无论开发环境还是生产环境，都使用后端接口
+  return request({
+    url: '/student/courseTable',
+    method: 'get',
+    params: { whichWeek },
+  }) as Promise<CourseTableResponse['data']>;
 };

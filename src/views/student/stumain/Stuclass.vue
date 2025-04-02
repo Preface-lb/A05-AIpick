@@ -11,7 +11,7 @@
       
       <!-- 功能按钮区 -->
       <div class="actions">
-        <button @click="printTimetable" class="action-btn print-btn">
+        <button @click="showPrintDialog" class="action-btn print-btn">
           <span class="btn-icon">🖨️</span>
           <span>打印</span>
         </button>
@@ -243,12 +243,93 @@
         </div>
       </div>
     </div>
+    
+    <!-- 打印设置弹窗 -->
+    <div v-if="printDialogVisible" class="print-modal" @click="closePrintDialog">
+      <div class="print-modal-content" @click.stop>
+        <div class="print-modal-header">
+          <h3 class="print-modal-title">打印设置</h3>
+          <button class="print-modal-close" @click="closePrintDialog">×</button>
+        </div>
+        <div class="print-modal-body">
+          <div class="print-options">
+            <!-- 时间范围选择 -->
+            <div class="print-option-group">
+              <h4 class="print-option-title">时间范围</h4>
+              <div class="date-range-picker">
+                <div class="date-picker">
+                  <label for="start-date" class="date-label">开始日期</label>
+                  <input 
+                    type="date" 
+                    id="start-date" 
+                    class="date-input" 
+                    v-model="printOptions.startDate"
+                  />
+                </div>
+                <div class="date-picker">
+                  <label for="end-date" class="date-label">结束日期</label>
+                  <input 
+                    type="date" 
+                    id="end-date" 
+                    class="date-input" 
+                    v-model="printOptions.endDate"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <!-- 打印选项 -->
+            <div class="print-option-group">
+              <h4 class="print-option-title">打印选项</h4>
+              <div class="print-checkbox-group">
+                <div class="print-checkbox">
+                  <input 
+                    type="checkbox" 
+                    id="show-empty" 
+                    v-model="printOptions.showEmptyCourses"
+                  />
+                  <label for="show-empty">显示空白课程</label>
+                </div>
+                <div class="print-checkbox">
+                  <input 
+                    type="checkbox" 
+                    id="color-print" 
+                    v-model="printOptions.colorPrint"
+                  />
+                  <label for="color-print">彩色打印</label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 字体大小 -->
+            <div class="print-option-group">
+              <h4 class="print-option-title">字体大小</h4>
+              <div class="font-size-selector">
+                <div 
+                  v-for="size in fontSizes" 
+                  :key="size.value"
+                  class="font-size-option"
+                  :class="{ 'selected': printOptions.fontSize === size.value }"
+                  @click="printOptions.fontSize = size.value"
+                >
+                  <span>{{ size.label }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="print-modal-footer">
+          <button class="print-cancel-btn" @click="closePrintDialog">取消</button>
+          <button class="print-confirm-btn" @click="confirmPrint">确认打印</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { getCourseTable } from '@/api/courseTable';
+import { getCourseTable } from '@/api/stu-courseTable'
 
 // 状态变量
 const courseTable = ref([]);
@@ -267,6 +348,32 @@ const periodMap = {
   'four': '4',
   'five': '5'
 };
+
+// 打印对话框状态
+const printDialogVisible = ref(false);
+const printOptions = ref({
+  startDate: formatDateForInput(new Date()),
+  endDate: formatDateForInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), // 默认一周后
+  showEmptyCourses: false,
+  colorPrint: true,
+  fontSize: 'medium'
+});
+
+// 字体大小选项
+const fontSizes = [
+  { label: '小', value: 'small' },
+  { label: '中', value: 'medium' },
+  { label: '大', value: 'large' }
+];
+
+// 格式化日期为input[type=date]格式 (YYYY-MM-DD)
+function formatDateForInput(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 // 获取周期数字
 const getPeriodNumber = (period) => {
@@ -364,6 +471,81 @@ const closeModal = () => {
   selectedCourse.value = null;
 };
 
+// 显示打印对话框
+const showPrintDialog = () => {
+  printDialogVisible.value = true;
+};
+
+// 关闭打印对话框
+const closePrintDialog = () => {
+  printDialogVisible.value = false;
+};
+
+// 确认打印
+const confirmPrint = () => {
+  // 应用打印选项
+  applyPrintOptions();
+  
+  // 关闭打印对话框
+  closePrintDialog();
+  
+  // 调用打印功能
+  window.print();
+  
+  // 打印完成后恢复默认样式
+  resetPrintStyles();
+};
+
+// 应用打印选项
+const applyPrintOptions = () => {
+  // 创建一个样式元素
+  const styleEl = document.createElement('style');
+  styleEl.id = 'print-custom-styles';
+  
+  // 根据选项生成CSS
+  let css = `
+    @media print {
+      /* 基础打印样式 */
+      .course-table {
+        font-size: ${getFontSizeValue(printOptions.value.fontSize)};
+      }
+      
+      /* 是否显示空白课程 */
+      ${!printOptions.value.showEmptyCourses ? '.course-cell:empty { display: none; }' : ''}
+      
+      /* 是否彩色打印 */
+      ${!printOptions.value.colorPrint ? `
+        .course-content {
+          background: #f3f4f6 !important;
+          color: #000 !important;
+          border: 1px solid #d1d5db !important;
+        }
+      ` : ''}
+    }
+  `;
+  
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+};
+
+// 重置打印样式
+const resetPrintStyles = () => {
+  const styleEl = document.getElementById('print-custom-styles');
+  if (styleEl) {
+    styleEl.remove();
+  }
+};
+
+// 获取字体大小值
+const getFontSizeValue = (size) => {
+  switch (size) {
+    case 'small': return '0.875rem';
+    case 'large': return '1.125rem';
+    case 'medium':
+    default: return '1rem';
+  }
+};
+
 // 加载课程表数据
 const loadCourseTable = async (whichWeek) => {
   loading.value = true;
@@ -416,8 +598,12 @@ const handleKeyDown = (e) => {
     changeWeek(currentWeekNum.value + 1);
   } else if (e.key === 'Home') {
     changeWeek(0);
-  } else if (e.key === 'Escape' && selectedCourse.value) {
-    closeModal();
+  } else if (e.key === 'Escape') {
+    if (selectedCourse.value) {
+      closeModal();
+    } else if (printDialogVisible.value) {
+      closePrintDialog();
+    }
   }
 };
 
@@ -573,11 +759,12 @@ onUnmounted(() => {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+
 .nav-btn:hover:not(.disabled) {
-  background-color: var(--input);
-  border-color: var(--muted);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background-color: var(--input); 
+  border-color: var(--muted); 
+  transform: translateY(-1px); 
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
 }
 
 .nav-btn.disabled {
@@ -1035,6 +1222,257 @@ onUnmounted(() => {
   box-shadow: 0 4px 6px rgba(76, 29, 149, 0.4);
 }
 
+/* 打印设置弹窗样式 */
+.print-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.print-modal-content {
+  background-color: white;
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 550px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: modal-in 0.3s ease-out;
+}
+
+.print-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.print-modal-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.1), transparent);
+  transform: skewX(-15deg);
+}
+
+.print-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.print-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+.print-modal-close:hover {
+  opacity: 1;
+}
+
+.print-modal-body {
+  padding: 1.5rem;
+}
+
+.print-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.print-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.print-option-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.date-range-picker {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-picker {
+  flex: 1;
+  min-width: 200px;
+}
+
+.date-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.5rem;
+}
+
+.date-input {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: white;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(76, 29, 149, 0.1);
+}
+
+.print-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.print-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.print-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  background-color: white;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.print-checkbox input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.print-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: white;
+  border-radius: 0.125rem;
+}
+
+.print-checkbox label {
+  font-size: 0.875rem;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.font-size-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.font-size-option {
+  flex: 1;
+  padding: 0.625rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: white;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.font-size-option:hover {
+  background-color: var(--input);
+  border-color: var(--muted);
+}
+
+.font-size-option.selected {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  font-weight: 500;
+}
+
+.print-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--input);
+  border-top: 1px solid var(--border);
+}
+
+.print-cancel-btn {
+  padding: 0.625rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: white;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.print-cancel-btn:hover {
+  background-color: var(--input);
+  border-color: var(--muted);
+}
+
+.print-confirm-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(76, 29, 149, 0.3);
+}
+
+.print-confirm-btn:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(76, 29, 149, 0.4);
+}
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .grid-header, .time-period, .time-slot {
@@ -1077,6 +1515,11 @@ onUnmounted(() => {
   
   .course-location {
     font-size: 0.7rem;
+  }
+  
+  .date-range-picker {
+    flex-direction: column;
+    gap: 0.75rem;
   }
 }
 
@@ -1123,7 +1566,7 @@ onUnmounted(() => {
     padding: 0;
   }
   
-  .header-container, .week-navigation, .actions {
+  .header-container, .week-navigation, .actions, .print-modal {
     display: none;
   }
   
@@ -1133,9 +1576,6 @@ onUnmounted(() => {
   
   .course-content {
     break-inside: avoid;
-    background: rgba(76, 29, 149, 0.1) !important;
-    color: black !important;
-    border: 1px solid rgba(76, 29, 149, 0.3);
   }
   
   .grid-header {
