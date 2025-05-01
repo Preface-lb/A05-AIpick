@@ -192,10 +192,10 @@ import { ref, reactive } from 'vue';
 // Mock user data
 const userProfile = reactive({
   name: '罗景康',
-  college: '计算机科学与技术学院',
-  grade: '2023级',
-  class: '计算机科学1班',
-  email: 'zhangsan@example.com',
+  college: '信息智能工程学院',
+  grade: '2024级',
+  class: '计算机网络技术2班',
+  email: '2849173390@qq.com',
   avatar: null
 });
 

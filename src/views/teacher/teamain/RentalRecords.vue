@@ -31,35 +31,34 @@
   </div>
 </template>
   
-  <script>
+<script>
+import { ref, onMounted } from 'vue';
+import { getRentalRecords } from '@/api/rental';
+
 export default {
-  data() {
+  setup() {
+    const rentalRecords = ref([]);
+
+    const loadRentalRecords = async () => {
+      try {
+        const data = await getRentalRecords();
+        rentalRecords.value = data;
+      } catch (error) {
+        console.error('获取租用记录失败:', error);
+      }
+    };
+
+    onMounted(() => {
+      loadRentalRecords();
+    });
+
     return {
-      rentalRecords: [
-        {
-          id: 1,
-          date: '2025-2-18',
-          resourceType: '教室',
-          resourceName: 'C303',
-          timePeriod: '9:00-18:00',
-          purpose: '上课',
-          status: '进行中',
-        },
-        {
-          id: 2,
-          date: '2025-2-17',
-          resourceType: '教室',
-          resourceName: 'C304',
-          timePeriod: '9:00-18:00',
-          purpose: '会议',
-          status: '已完成',
-        },
-        // 添加更多租用记录
-      ],
-    }
-  },
-}
+      rentalRecords
+    };
+  }
+};
 </script>
+
   
   <style>
 .rental-records {

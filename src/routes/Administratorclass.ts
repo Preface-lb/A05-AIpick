@@ -11,6 +11,6 @@ export const AdministratorclassRoute: RouteRecordRaw[] = [
   {
     name: 'Administratorclass',
     path: '/administratorclass',
-    component: ()=> import('@/views/administrator/administratorclass.vue')
+    component: () => import('../views/administrator/administratorclass.vue')
   }
 ]

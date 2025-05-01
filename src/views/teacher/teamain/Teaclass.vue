@@ -329,7 +329,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { getCourseTable } from '@/api/stu-courseTable'
+import { getCourseTable } from '@/api/tea-courseTable'
 
 // 状态变量
 const courseTable = ref([]);

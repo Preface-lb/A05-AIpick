@@ -11,6 +11,6 @@ export const StudentRoute: RouteRecordRaw[] = [
   {
     name: 'Student',
     path: '/student',
-    component: ()=> import('@/views/student/student.vue')
+    component: () => import('../views/student/student.vue')
   }
 ]

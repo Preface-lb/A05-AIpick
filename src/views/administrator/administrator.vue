@@ -44,7 +44,7 @@
         <div class="secure-label">管理员界面</div>
         
         <h1 class="title">
-          <span>欢迎使用AI排课系统</span>
+          <span>欢迎使用智慧排课系统</span>
           <span class="highlight">爱排课 AIpick</span>
         </h1>
   

@@ -11,6 +11,6 @@ export const StuRegisterRoute: RouteRecordRaw[] = [
   {
     name: 'StuRegister',
     path: '/stuRegister',
-    component: ()=> import('@/views/login/StuRegister.vue')
+    component: () => import('../views/login/StuRegister.vue')
   }
 ]

@@ -225,6 +225,7 @@ const classes = ref([]);
 const fetchColleges = async () => {
   try {
     const response = await getColleges();
+    console.log('页面的的学院列表:', response);
     colleges.value = response;
   } catch (error) {
     console.error('获取学院列表失败:', error);
@@ -245,6 +246,7 @@ const handleCollegeChange = async () => {
 
   try {
     const response = await getClassesByCollege(selectedCollege.value);
+    console.log('页面的的班级列表:', response);
     classes.value = response;
   } catch (error) {
     console.error('获取班级列表失败:', error);

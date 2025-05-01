@@ -115,28 +115,32 @@
   </div>
 </template>
 
+
 <script setup>
-import { useRouter, useRoute } from 'vue-router';
-import { ref, computed, onMounted, h } from 'vue';
+import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useStore } from 'vuex';
 import { getUserInfo } from '@/api/student';
 import Notifications from '@/views/student/stumain/Notifications.vue';
 import Stuclass from '@/views/student/stumain/Stuclass.vue';
 import StuProfile from '@/views/student/stumain/StuProfile.vue'; 
 import Stufeedback from '@/views/student/stumain/Stufeedback.vue'; 
+// 使用 import 引入图片
+import avatarImg from '@/assets/PIC/stupic.png';
 
+const router = useRouter();
+const store = useStore();
 
-// State
 const activeIndex = ref('1');
 const currentComponent = ref(Notifications);
 const collapsed = ref(false);
 const isMobile = ref(false);
 
-// User data
 const userName = ref();
 const userClass = ref();
-const userAvatar = ref(require('@/assets/PIC/stupic.png'));
+// 使用引入的图片
+const userAvatar = ref(avatarImg);
 
-// Computed properties
 const pageTitle = computed(() => {
   if (activeIndex.value === '1') return '通知公告';
   if (activeIndex.value === '2') return '课程表';
@@ -145,7 +149,6 @@ const pageTitle = computed(() => {
   return '';
 });
 
-// Methods
 const handleSelect = (index) => {
   activeIndex.value = index;
   if (index === '1') {
@@ -159,58 +162,49 @@ const handleSelect = (index) => {
   }
 };
 
-const handleConfirm = () => {
-  console.log('Confirm action');
-};
-
 const toggleSidebar = () => {
   collapsed.value = !collapsed.value;
 };
 
-// Check if mobile on mount
-onMounted(() => {
-  const checkIfMobile = () => {
-    isMobile.value = window.innerWidth < 768;
-    if (isMobile.value && !collapsed.value) {
-      collapsed.value = true;
-    }
-  };
-  
-  checkIfMobile();
-  window.addEventListener('resize', checkIfMobile);
-  
-  // Cleanup
-  return () => {
-    window.removeEventListener('resize', checkIfMobile);
-  };
-});
-
-// 获取用户信息
-const fetchStudentInfo = async () => {
-  try {
-    const response = await getUserInfo();
-    userName.value = response.name || '学生姓名';
-    userClass.value = response.class || '2024级计算机科学班';
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
+const checkIfMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+  if (isMobile.value && !collapsed.value) {
+    collapsed.value = true;
   }
 };
 
 onMounted(() => {
+  window.addEventListener('resize', checkIfMobile);
   fetchStudentInfo();
 });
 
-// 退出登录
-const router = useRouter();
+onUnmounted(() => {
+  window.removeEventListener('resize', checkIfMobile);
+});
+
+const loading = ref(false);
+const fetchStudentInfo = async () => {
+  loading.value = true;
+  try {
+    const response = await getUserInfo();
+    userName.value = response.name || '学生姓名';
+    userClass.value = response.class || '2024级计算机网络技术2班';
+    store.commit('SET_USER_INFO', { name: userName.value, class: userClass.value });
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    // 这里可以添加错误提示或重试逻辑
+  } finally {
+    loading.value = false;
+  }
+};
 
 const handleLogout = () => {
 
-  router.push('/'); 
+  router.push('/');
 };
-
-
-
 </script>
+
+
 
 <style scoped>
 

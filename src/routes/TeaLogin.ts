@@ -11,7 +11,7 @@ export const TeaLoginRoute: RouteRecordRaw[] = [
   {
     name: 'TeaLogin',
     path: '/tealogin',
-    component: ()=> import('@/views/login/TeaLogin.vue')
+    component: () => import('../views/login/TeaLogin.vue')
   }
 ]
 

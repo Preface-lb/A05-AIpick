@@ -22,7 +22,8 @@
     "sass": "^1.85.1",
     "vue": "^3.5.12",
     "vue-router": "^4.5.0",
-    "vue3-draggable": "^2.0.9"
+    "vue3-draggable": "^2.0.9",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",

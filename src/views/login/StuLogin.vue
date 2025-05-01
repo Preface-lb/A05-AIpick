@@ -70,74 +70,79 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { login } from '@/api/stu-auth'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { login } from '@/api/stu-auth';
 
-const router = useRouter()
+const router = useRouter();
 
-const username = ref<string>('')
-const password = ref<string>('')
-const usernameError = ref<string>('')
-const passwordError = ref<string>('')
-const isSubmitting = ref<boolean>(false)
+const username = ref('');
+const password = ref('');
+const usernameError = ref('');
+const passwordError = ref('');
+const isSubmitting = ref(false);
 
 // 登录处理逻辑
 const handleLogin = async () => {
   // 清空错误信息
-  usernameError.value = ''
-  passwordError.value = ''
+  usernameError.value = '';
+  passwordError.value = '';
 
   // 校验输入
   if (!username.value.trim()) {
-    usernameError.value = '邮箱不能为空'
-    return
+    usernameError.value = '邮箱不能为空';
+    return;
   }
   if (!password.value.trim()) {
-    passwordError.value = '密码不能为空'
-    return
+    passwordError.value = '密码不能为空';
+    return;
   }
 
   // 设置提交状态
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const data = await login(username.value, password.value)
-    // 如果登录成功，data 中应该包含 token 等信息
-    console.log('登录成功:', data)
-    localStorage.setItem('token', data.token)
-    router.push('/student')
+    const data = await login(username.value, password.value);
+    console.log('登录成功:', data);
+    localStorage.setItem('token', data.token);
+    router.push('/student');
   } catch (error) {
-    // 处理登录失败的情况
-    console.error('登录失败:', error)
+    console.error('登录失败:', error);
+    passwordError.value = '登录失败，请稍后再试';
     if (error instanceof Error) {
-      passwordError.value = error.message || '登录失败，请稍后再试'
-    } else {
-      passwordError.value = '登录失败，请稍后再试'
+      passwordError.value = error.message || '登录失败，请稍后再试';
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      passwordError.value = error.message || '登录失败，请稍后再试';
     }
   } finally {
-    isSubmitting.value = false
- }
-}
+    isSubmitting.value = false;
+    // 可以在这里添加额外的逻辑，例如重置表单状态
+    // username.value = '';
+    // password.value = '';
+    // usernameError.value = '';
+    // passwordError.value = '';
+  }
+};
 
 // 注册按钮点击事件
 const handleRegister = () => {
-  router.push('/stuRegister')
-}
+  router.push('/stuRegister');
+};
 
 // 输入框聚焦与失去焦点事件
 const focusInput = (field) => {
-  if (field === 'username') usernameError.value = ''
-  if (field === 'password') passwordError.value = ''
-}
+  if (field === 'username') usernameError.value = '';
+  if (field === 'password') passwordError.value = '';
+};
 
 const blurInput = (field) => {
   if (field === 'username' && !username.value.trim()) {
-    usernameError.value = '邮箱不能为空'
+    usernameError.value = '邮箱不能为空';
   }
   if (field === 'password' && !password.value.trim()) {
-    passwordError.value = '密码不能为空'
+    passwordError.value = '密码不能为空';
   }
-}
+};
+
 </script>
 <style scoped>
 @import '@/style/global.css';

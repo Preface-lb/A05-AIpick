@@ -140,8 +140,8 @@ const resourceMenuOpen = ref(false);
 const isMobile = ref(false);
 
 // 用户数据
-const userName = ref('教师姓名');
-const userClass = ref('2024级计算机科学班');
+const userName = ref('裴涛');
+const userClass = ref('信息智能工程学院');
 const userRole = ref('教师');
 const userAvatar = ref(require('@/assets/PIC/teapic.png'));
 

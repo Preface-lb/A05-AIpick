@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://10.194.7.4:8081', // 修改为你的后端 API 基础 URL
+  baseURL: 'http://47.96.106.71:8081', // 修改为你的后端 API 基础 URL
   timeout: 18000  // 请求超时时间（毫秒）
 })
 
@@ -12,7 +12,7 @@ request.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       // 在请求头中添加 token
-      config.headers.token= token;
+      config.headers.token = token;
     }
     return config
   },

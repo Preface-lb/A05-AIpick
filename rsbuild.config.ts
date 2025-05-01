@@ -5,7 +5,11 @@ import { pluginSass } from '@rsbuild/plugin-sass'
 import { pluginBabel } from '@rsbuild/plugin-babel'
 import { pluginVueJsx } from '@rsbuild/plugin-vue-jsx'
 
+
 export default defineConfig({
+  output: {
+    assetPrefix: './',
+  },
   plugins: [
     pluginVue(),
     pluginLess(),

@@ -46,7 +46,7 @@ export default {
         {
           id: 1,
           roomNumber: 'C303',
-          location: '西楼三层303',
+          location: '东楼三层303',
           capacity: '200人',
           availableTime: '9:00-18:00',
           status: '可用',
@@ -54,7 +54,7 @@ export default {
         {
           id: 2,
           roomNumber: 'C304',
-          location: '西楼三层304',
+          location: '东楼三层304',
           capacity: '150人',
           availableTime: '9:00-18:00',
           status: '已预约',

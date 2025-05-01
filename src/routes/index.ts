@@ -11,7 +11,7 @@ import { TeacherRoute } from './teacher'
 import { AdministratorRoute } from './Administrator'
 import { AdministratorpickRoute } from './Administratorpick'
 import { AdministratorclassRoute } from './Administratorclass'
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, createMemoryHistory, RouteRecordRaw } from 'vue-router'
 import { usePermission } from '@/hooks/usePermission'
 
 const Layout = import('@/component/main-layout/index.vue')
@@ -20,19 +20,12 @@ const NotPermission = import('@/component/not-permission-page/index.vue')
 export const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: Layout,
-    children: [...homeRoute,...chooseRoute,...TeaLoginRoute,...StuLoginRoute,...StuRegisterRoute,...AdminLoginRoute,...StudentRoute,...TeacherRoute,...AdministratorRoute,...AdministratorclassRoute,...AdministratorpickRoute],
-  },
-  {
-    path: '/403',
-    component: NotPermission,
-    meta: {
-      permissionKey: null,
-    },
-  },
+    component: () => import('../component/main-layout/index.vue'),
+    children: [...homeRoute, ...chooseRoute, ...TeaLoginRoute, ...StuLoginRoute, ...StuRegisterRoute, ...AdminLoginRoute, ...StudentRoute, ...TeacherRoute, ...AdministratorRoute, ...AdministratorclassRoute, ...AdministratorpickRoute],
+  }
 ]
 
-const router = createRouter({ history: createWebHistory(), routes })
+const router = createRouter({ history: createWebHashHistory("/"), routes })
 
 router.beforeEach((to, from, next) => {
   const { checkPermission } = usePermission()

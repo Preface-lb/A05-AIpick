@@ -1,6 +1,6 @@
 // api/tea-courseTable.ts
 import request from '@/utils/request';
-import { mockCourseTable, mockNextWeekCourseTable } from '@/mocks/courseTable';
+import { mockCourseTable, mockNextWeekCourseTable } from '@/mocks/tea-courseTable';
 
 // 定义课程表响应数据的接口
 interface CourseTableResponse {

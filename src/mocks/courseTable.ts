@@ -21,56 +21,57 @@ export const mockCourseTable: CourseTableResponse = {
   code: 1,
   message: "success",
   data: {
-    semester: "2023-2024学年",
-    week: 10,
+    semester: "2024-2025-1",
+    week: 1,
     courseTable: [
+      // 第1周
       {
-        date: [2023, 10, 9],
-        one: "数学, 教室A101",
-        two: "语文, 教室A102, 李老师",
-        three: "英语, 教室A103, 王老师",
-        four: null,
+        date: [2024, 3, 4],
+        one: "信息技术, 教室A101, 苏强",
+        two: "高等数学, 教室A102, 李素丽",
+        three: "计算机网络基础, 教室B101, 高珊珊",
+        four: "C语言程序设计, 教室B102, 裴涛",
         five: null,
         day: 1
       },
       {
-        date: [2023, 10, 10],
-        one: "物理, 教室B101, 赵老师",
-        two: null,
-        three: "化学, 教室B102, 钱老师",
-        four: "生物, 教室B103, 孙老师",
+        date: [2024, 3, 5],
+        one: "思想道德与法治, 教室C101, 李庆霞",
+        two: "普通话正音1, 教室C102, 衡怡欣",
+        three: "体育与健康1, 教室D101, 张林升",
+        four: null,
         five: null,
         day: 2
       },
       {
-        date: [2023, 10, 11],
-        one: null,
-        two: "历史, 教室C101, 周老师",
+        date: [2024, 3, 6],
+        one: "形势与政策1, 教室E101, 孙燕华",
+        two: null,
         three: null,
-        four: "地理, 教室C102, 吴老师",
+        four: null,
         five: null,
         day: 3
       },
       {
-        date: [2023, 10, 12],
-        one: "政治, 教室D101, 郑老师",
-        two: null,
-        three: "体育, 体育馆, 高老师",
-        four: null,
+        date: [2024, 3, 7],
+        one: null,
+        two:"C语言程序设计, 教室B102, 裴涛",
+        three: null,
+        four: "高等数学, 教室A102, 李素丽",
         five: null,
         day: 4
       },
       {
-        date: [2023, 10, 13],
+        date: [2024, 3, 8],
         one: null,
-        two: null,
+        two: "信息技术, 教室A101, 苏强",
         three: null,
         four: null,
         five: null,
         day: 5
       },
       {
-        date: [2023, 10, 14],
+        date: [2024, 3, 9],
         one: null,
         two: null,
         three: null,
@@ -79,88 +80,92 @@ export const mockCourseTable: CourseTableResponse = {
         day: 6
       },
       {
-        date: [2023, 10, 15],
+        date: [2024, 3, 10],
         one: null,
         two: null,
         three: null,
         four: null,
         five: null,
         day: 7
-      }
+      },
+      
     ]
   }
 };
 
+// 添加mockNextWeekCourseTable
 export const mockNextWeekCourseTable: CourseTableResponse = {
   code: 1,
   message: "success",
   data: {
-    semester: "2023-2024学年",
-    week: 11,
+    semester: "2024-2025-1",
+    week: 2,
     courseTable: [
-      {
-        date: [2023, 10, 16],
-        one: "数学, 教室A101, 张老师",
-        two: null,
-        three: "英语, 教室A103, 王老师",
-        four: null,
-        five: null,
-        day: 1
-      },
-      {
-        date: [2023, 10, 17],
-        one: "物理, 教室B101, 赵老师",
-        two: "化学, 教室B102, 钱老师",
-        three: null,
-        four: null,
-        five: null,
-        day: 2
-      },
-      {
-        date: [2023, 10, 18],
-        one: null,
-        two: "历史, 教室C101, 周老师",
-        three: "地理, 教室C102, 吴老师",
-        four: null,
-        five: null,
-        day: 3
-      },
-      {
-        date: [2023, 10, 19],
-        one: "政治, 教室D101, 郑老师",
-        two: null,
-        three: null,
-        four: null,
-        five: null,
-        day: 4
-      },
-      {
-        date: [2023, 10, 20],
-        one: null,
-        two: null,
+     // 第2周
+     {
+      date: [2024, 3, 11],
+      one: "信息技术, 教室A101, 苏强",
+      two: "高等数学, 教室A102, 李素丽",
+      three: "计算机网络基础, 教室B101, 高珊珊",
+      four: "C语言程序设计, 教室B102, 裴涛",
+      five: null,
+      day: 1
+    },
+    {
+      date: [2024, 3, 12],
+      one: "思想道德与法治, 教室C101, 李庆霞",
+      two: "普通话正音1, 教室C102, 衡怡欣",
+      three: "体育与健康1, 教室D101, 张林升",
+      four: null,
+      five: null,
+      day: 2
+    },
+    {
+      date: [2024, 3, 13],
+      one: "形势与政策1, 教室E101, 孙燕华",
+      two: null,
+      three: null,
+      four: null,
+      five: null,
+      day: 3
+    },
+    {
+      date: [2024, 3, 14],
+      one: null,
+      two:"C语言程序设计, 教室B102, 裴涛",
+      three: null,
+      four: "高等数学, 教室A102, 李素丽",
+      five: null,
+      day: 4
+    },
+    {
+      date: [2024, 3, 15],
+      one: null,
+        two: "信息技术, 教室A101, 苏强",
         three: null,
         four: null,
         five: null,
         day: 5
-      },
-      {
-        date: [2023, 10, 21],
-        one: null,
-        two: null,
-        three: null,
-        four: null,
-        five: null,
-        day: 6
-      },
-      {
-        date: [2023, 10, 22],
-        one: null,
-        two: null,
-        three: null,
-        four: null,
-        five: null,
-        day: 7
-      }
+    },
+    {
+      date: [2024, 3, 16],
+      one: null,
+      two: null,
+      three: null,
+      four: null,
+      five: null,
+      day: 6
+    },
+    {
+      date: [2024, 3, 17],
+      one: null,
+      two: null,
+      three: null,
+      four: null,
+      five: null,
+      day: 7
+    }
     ]
   }
 };
+

@@ -11,6 +11,6 @@ export const TeacherRoute: RouteRecordRaw[] = [
   {
     name: 'Teacher',
     path: '/teacher',
-    component: ()=> import('@/views/teacher/teacher.vue')
+    component: () => import('../views/teacher/teacher.vue')
   }
 ]

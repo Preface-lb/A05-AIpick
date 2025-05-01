@@ -1,6 +1,5 @@
-// api/stu-courseTable.ts
 import request from '@/utils/request';
-import { mockCourseTable, mockNextWeekCourseTable } from '@/mocks/courseTable';
+import { mockCourseTable, mockNextWeekCourseTable } from '../mocks/courseTable';
 
 // 定义课程表响应数据的接口
 interface CourseTableResponse {
@@ -23,7 +22,22 @@ interface CourseTableResponse {
 
 // 获取课程表数据
 export const getCourseTable = (whichWeek: number): Promise<CourseTableResponse['data']> => {
-  // 无论开发环境还是生产环境，都使用后端接口
+  // 如果是开发环境，直接返回模拟数据
+  if (process.env.NODE_ENV === 'development') {
+    return new Promise((resolve) => {
+      // 模拟网络延迟
+      setTimeout(() => {
+        // 根据 whichWeek 参数返回不同的模拟数据
+        if (whichWeek === 0) {
+          resolve(mockCourseTable.data);
+        } else {
+          resolve(mockNextWeekCourseTable.data);
+        }
+      }, 1000);
+    });
+  }
+
+  // 生产环境调用后端接口
   return request({
     url: '/student/courseTable',
     method: 'get',

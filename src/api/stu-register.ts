@@ -43,7 +43,7 @@ interface SendCaptchaResponse {
  */
 interface CollegesResponse {
   code: number; // 状态码
-  message: string | null; // 消息，null 表示成功
+  message: string; // 消息，null 表示成功
   data?: { id: number; name: string }[]; // 学院列表
 }
 
@@ -123,13 +123,19 @@ export const sendCaptcha = (username: string): Promise<string> => {
  * 获取学院列表接口
  * 返回数据为学院数组
  */
+/**
+ * 获取学院列表接口
+ * 返回数据为学院数组
+ */
 export const getColleges = (): Promise<{ id: number; name: string }[]> => {
   return request({
     url: '/student/colleges',
     method: 'get'
-  }).then((data) => {
+  }).then((response) => {
+    const data = response.data.data;
+    console.log('api学院列表:', data);
     if (Array.isArray(data)) {
-      return data;
+      return data as { id: number; name: string }[];
     }
     return [{ id: -1, name: '默认学院' }];
   }).catch((error) => {
@@ -146,14 +152,13 @@ export const getClassesByCollege = (name: string): Promise<{ id: number; name: s
     url: '/student/classes',
     method: 'get',
     params: { name }
-  }).then((data) => {
+  }).then((response) => {
+    const data = response.data.data;
+    console.log('api班级列表:', data);
     if (Array.isArray(data)) {
-      return data.map(item => ({
-        id: item.id,
-        name: item.name
-      }));
+      return data as { id: number; name: string }[];
     }
-    return [];
+    return [{ id: -1, name: '默认班级' }];
   }).catch((error) => {
     console.error('获取班级列表失败:', error);
     throw error;

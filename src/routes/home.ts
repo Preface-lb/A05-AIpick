@@ -9,9 +9,9 @@ export const homeRoute: RouteRecordRaw[] = [
   //   },
 
   {
-    name: 'Home',
+    name: 'Home2',
     path: '',
-    component: ()=> import('@/views/home/Home.vue')
+    component: () => import('../views/home/home.vue'),
   }
 ]
 

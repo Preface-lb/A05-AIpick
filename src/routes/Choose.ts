@@ -11,7 +11,7 @@ export const chooseRoute: RouteRecordRaw[] = [
   {
     name: 'choose',
     path: '/choose',
-    component: ()=> import('@/views/home/Choose.vue')
+    component: () => import('../views/home/Choose.vue')
   }
 ]
 
