@@ -1,5 +1,6 @@
 // api/tea-auth.ts
 import request from '@/utils/request'
+import { setToken } from '@/utils/token';
 
 /**
  * 老师登录接口
@@ -12,5 +13,12 @@ export const teacherLogin = (number: string, password: string) => {
     url: '/teacher/login', // 根据你的后端接口修改路径
     method: 'post',
     data: { number, password }
-  })
+  }).then((response) => {
+          console.log('login response', response);
+          if (response && response.tokenValue) {
+              console.log('set token', response.tokenValue);
+              setToken(response.tokenValue);
+          }
+          return response;
+      });
 }

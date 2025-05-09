@@ -77,20 +77,20 @@
 import { ref } from 'vue'
 import { adminLogin } from '@/api/admin-auth' 
 
-const admUserName = ref('') 
+const account = ref('') 
 const password = ref('')
-const admUserNameError = ref('') 
+const accountError = ref('') 
 const passwordError = ref('')
 const isSubmitting = ref(false)
 
 const handleLogin = async () => {
   // 清空之前的错误信息
-  admUserNameError.value = '' 
+  accountError.value = '' 
   passwordError.value = ''
 
   // 校验用户名和密码
-  if (!admUserName.value.trim()) { 
-    admUserNameError.value = '用户名不能为空' 
+  if (!account.value.trim()) { 
+    accountError.value = '用户名不能为空' 
     return
   }
   if (!password.value.trim()) {
@@ -102,7 +102,7 @@ const handleLogin = async () => {
   isSubmitting.value = true
   try {
     const response = await adminLogin({
-      admUserName: admUserName.value, 
+      account: account.value, 
       password: password.value
     })
     console.log('登录成功:', response.data)
@@ -131,23 +131,23 @@ const handleLogin = async () => {
         errorMessage = error.response.data || errorMessage
       }
     }
-    admUserNameError.value = errorMessage 
+    accountError.value = errorMessage 
   } finally {
     isSubmitting.value = false
   }
 }
 
 const focusInput = (type) => {
-  if (type === 'admUserName') { 
-    admUserNameError.value = '' 
+  if (type === 'account') { 
+    accountError.value = '' 
   } else if (type === 'password') {
     passwordError.value = ''
   }
 }
 
 const blurInput = (type) => {
-  if (type === 'admUserName' && !admUserName.value.trim()) { 
-    admUserNameError.value = '用户名不能为空' 
+  if (type === 'account' && !account.value.trim()) { 
+    accountError.value = '用户名不能为空' 
   } else if (type === 'password' && !password.value.trim()) {
     passwordError.value = '密码不能为空'
   }

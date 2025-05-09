@@ -35,7 +35,6 @@ interface SendCaptchaParams {
 interface SendCaptchaResponse {
   code: number; // 状态码
   message: string | null; // 消息，null 表示成功
-
 }
 
 /**
@@ -80,21 +79,7 @@ export const register = (data: StudentRegisterParams): Promise<StudentRegisterRe
     throw error;
   });
 };
-/**
- * 发送验证码接口
- * @param username - 用户邮箱
- * @returns Promise<string> 验证码
- */
-/**
- * 发送验证码接口
- * @param username - 用户邮箱
- * @returns Promise<string> 验证码
- */
-/**
- * 发送验证码接口
- * @param username - 用户邮箱
- * @returns Promise<string> 验证码
- */
+
 /**
  * 发送验证码接口
  * @param username - 用户邮箱
@@ -117,12 +102,6 @@ export const sendCaptcha = (username: string): Promise<string> => {
   });
 };
 
-
-
-/**
- * 获取学院列表接口
- * 返回数据为学院数组
- */
 /**
  * 获取学院列表接口
  * 返回数据为学院数组
@@ -145,13 +124,13 @@ export const getColleges = (): Promise<{ id: number; name: string }[]> => {
 };
 
 /**
- * 根据学院获取班级列表接口
+ * 根据学院和年级获取班级列表接口
  */
-export const getClassesByCollege = (name: string): Promise<{ id: number; name: string }[]> => {
+export const getClassesByCollege = (collegeName: string, grade: string): Promise<{ id: number; name: string }[]> => {
   return request({
     url: '/student/classes',
     method: 'get',
-    params: { name }
+    params: { collegeName, grade }
   }).then((response) => {
     const data = response.data.data;
     console.log('api班级列表:', data);
@@ -164,5 +143,4 @@ export const getClassesByCollege = (name: string): Promise<{ id: number; name: s
     throw error;
   });
 };
-
-
+    

@@ -103,8 +103,14 @@ const handleLogin = async () => {
   try {
     const data = await login(username.value, password.value);
     console.log('登录成功:', data);
-    localStorage.setItem('token', data.token);
-    router.push('/student');
+    // 修改为访问 tokenValue 属性
+    if (data?.tokenValue) {
+      localStorage.setItem('token', data.tokenValue);
+      router.push('/student');
+    } else {
+      console.error('登录失败: 未获取到 token');
+      passwordError.value = '登录失败: 未获取到 token';
+    }
   } catch (error) {
     console.error('登录失败:', error);
     passwordError.value = '登录失败，请稍后再试';
@@ -142,8 +148,9 @@ const blurInput = (field) => {
     passwordError.value = '密码不能为空';
   }
 };
-
 </script>
+
+
 <style scoped>
 @import '@/style/global.css';
 

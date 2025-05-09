@@ -115,7 +115,7 @@
   </div>
 </template>
 
-
+<!-- view/student/student.vue -->
 <script setup>
 import { useRouter } from 'vue-router';
 import { ref, computed, onMounted, onUnmounted } from 'vue';

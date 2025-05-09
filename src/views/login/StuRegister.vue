@@ -238,15 +238,18 @@ const handleCollegeClick = () => {
   fetchColleges();
 };
 
-// 选中学院后获取对应班级列表
+// 选中学院后获取对应班级列表（新增年级参数校验）
 const handleCollegeChange = async () => {
   selectedClass.value = '';
   classes.value = [];
-  if (!selectedCollege.value) return;
+  
+  // 新增：校验年级是否存在且格式正确
+  const isValidGrade = /^\d{4}$/.test(grade.value.trim());
+  if (!selectedCollege.value || !isValidGrade) return;
 
   try {
-    const response = await getClassesByCollege(selectedCollege.value);
-    console.log('页面的的班级列表:', response);
+    // 假设 API 接收学院 ID 和年级两个参数（如：getClassesByCollege(collegeId, grade)）
+    const response = await getClassesByCollege(selectedCollege.value, grade.value);
     classes.value = response;
   } catch (error) {
     console.error('获取班级列表失败:', error);
@@ -254,15 +257,17 @@ const handleCollegeChange = async () => {
   }
 };
 
-// 使用 watch 监听学院变化
-watch(selectedCollege, (newVal) => {
-  if (newVal) {
-    handleCollegeChange();
-  } else {
-    classes.value = [];
-    selectedClass.value = '';
+// 监听学院或年级变化，重新获取班级列表
+watch(
+  [selectedCollege, grade], // 监听两个响应式变量
+  ([newCollege, newGrade]) => {
+    if (newCollege && newGrade && /^\d{4}$/.test(newGrade.trim())) {
+      handleCollegeChange(); // 触发班级获取
+    } else {
+      classes.value = []; // 清空班级列表（年级/学院无效时）
+    }
   }
-});
+);
 
 // 组件加载时自动请求学院数据
 onMounted(() => {
@@ -406,30 +411,8 @@ const sendTousername = () => {
   }
   captchaButtonDisabled.value = true;
   captchaButtonText.value = '发送中...';
-  sendCaptcha(username.value)
-    .then((captcha) => {
-      console.log('验证码发送成功:', captcha);
-      let count = 120;
-      captchaButtonText.value = `${count}秒后重试`;
-      captchaTimer = setInterval(() => {
-        count--;
-        if (count <= 0) {
-          clearInterval(captchaTimer);
-          captchaButtonDisabled.value = false;
-          captchaButtonText.value = '获取验证码';
-        } else {
-          captchaButtonText.value = `${count}秒后重试`;
-        }
-      }, 1800);
-    })
-    .catch((error) => {
-      console.error('验证码发送失败:', error);
-      alert(error.message || '验证码发送失败，请稍后再试');
-      captchaButtonDisabled.value = false;
-      captchaButtonText.value = '获取验证码';
-    });
+  sendCaptcha(username.value);
 };
-
 const navigateToLogin = () => {
   router.push('/stulogin');
 };
