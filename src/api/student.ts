@@ -1,18 +1,19 @@
-//api/student.ts
-
+// api/student.ts
 import request from '@/utils/request';
 
-// 定义接口类型
-interface UserInfoResponse {
+// 定义接口返回的数据结构
+interface UserInfoData {
+    username: string;
     name: string;
-    grade: string;
+    studentClass: string;
+    college: string;
+    grade: number;
 }
 
 // 获取用户信息
-export const getUserInfo = (): Promise<UserInfoResponse> => {
+export const getUserInfo = (): Promise<UserInfoData> => {
     return request({
-        url: '/student/info', // 后端接口地址
+        url: '/student/info',
         method: 'get'
-    }) as Promise<UserInfoResponse>;
+    });
 };
-    

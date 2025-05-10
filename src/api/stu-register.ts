@@ -73,7 +73,7 @@ export const register = (data: StudentRegisterParams): Promise<StudentRegisterRe
     method: 'post',
     data
   }).then((response) => {
-    return response.data;
+    return response;
   }).catch((error) => {
     console.error('注册请求失败:', error);
     throw error;
@@ -91,11 +91,8 @@ export const sendCaptcha = (username: string): Promise<string> => {
     method: 'post',
     params: { username }
   }).then((response) => {
-    // 检查 response 是否为 null 或 undefined
-    if (!response || !response.data || typeof response.data !== 'string') {
-      throw new Error('验证码发送成功');
-    }
-    return response.data; // 返回验证码
+    // 拦截器已处理code检查，直接返回response
+    return response;
   }).catch((error) => {
     console.error('发送验证码请求失败:', error);
     throw error;
@@ -111,10 +108,10 @@ export const getColleges = (): Promise<{ id: number; name: string }[]> => {
     url: '/student/colleges',
     method: 'get'
   }).then((response) => {
-    const data = response.data.data;
-    console.log('api学院列表:', data);
-    if (Array.isArray(data)) {
-      return data as { id: number; name: string }[];
+    // response 已经是学院列表数组，不需要再访问 .data.data
+    console.log('api学院列表:', response);
+    if (Array.isArray(response)) {
+      return response as { id: number; name: string }[];
     }
     return [{ id: -1, name: '默认学院' }];
   }).catch((error) => {
@@ -122,7 +119,6 @@ export const getColleges = (): Promise<{ id: number; name: string }[]> => {
     throw error;
   });
 };
-
 /**
  * 根据学院和年级获取班级列表接口
  */
@@ -132,10 +128,10 @@ export const getClassesByCollege = (collegeName: string, grade: string): Promise
     method: 'get',
     params: { collegeName, grade }
   }).then((response) => {
-    const data = response.data.data;
-    console.log('api班级列表:', data);
-    if (Array.isArray(data)) {
-      return data as { id: number; name: string }[];
+    // 直接使用response，因为拦截器已经处理过data
+    console.log('api班级列表:', response);
+    if (Array.isArray(response)) {
+      return response as { id: number; name: string }[];
     }
     return [{ id: -1, name: '默认班级' }];
   }).catch((error) => {

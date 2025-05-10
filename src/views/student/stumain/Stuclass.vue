@@ -552,7 +552,8 @@ const loadCourseTable = async (whichWeek) => {
   error.value = null;
   
   try {
-    const data = await getCourseTable(whichWeek);
+    const semesterValue = semester.value;
+    const data = await getCourseTable(whichWeek, semesterValue);
     
     semester.value = data.semester;
     week.value = data.week;

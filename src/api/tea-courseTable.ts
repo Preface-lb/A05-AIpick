@@ -1,6 +1,4 @@
-// api/tea-courseTable.ts
 import request from '@/utils/request';
-import { mockCourseTable, mockNextWeekCourseTable } from '@/mocks/tea-courseTable';
 
 // 定义课程表响应数据的接口
 interface CourseTableResponse {
@@ -23,19 +21,12 @@ interface CourseTableResponse {
 
 // 获取课程表数据
 export const getCourseTable = (whichWeek: number): Promise<CourseTableResponse['data']> => {
-  // 在开发环境中使用模拟数据
-  if (process.env.NODE_ENV === 'development') {
-    if (whichWeek === 0) {
-      return Promise.resolve(mockCourseTable.data);
-    } else {
-      return Promise.resolve(mockNextWeekCourseTable.data);
-    }
-  } else {
-    // 在生产环境中使用真实 API
-    return request({
-      url: '/teacher/courseTable',
-      method: 'get',
-      params: { whichWeek },
-    }) as Promise<CourseTableResponse['data']>;
-  }
+
+
+  // 生产环境调用后端接口
+  return request({
+    url: '/teacher/courseTable',
+    method: 'get',
+    params: { whichWeek },
+  }) as Promise<CourseTableResponse['data']>;
 };

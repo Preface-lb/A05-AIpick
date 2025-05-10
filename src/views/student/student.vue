@@ -187,8 +187,9 @@ const fetchStudentInfo = async () => {
   loading.value = true;
   try {
     const response = await getUserInfo();
+    // 根据实际返回结构调整
     userName.value = response.name || '学生姓名';
-    userClass.value = response.class || '2024级计算机网络技术2班';
+    userClass.value = response.studentClass || '2024级计算机网络技术2班';
     store.commit('SET_USER_INFO', { name: userName.value, class: userClass.value });
   } catch (error) {
     console.error('获取用户信息失败:', error);
@@ -199,10 +200,9 @@ const fetchStudentInfo = async () => {
 };
 
 const handleLogout = () => {
-
   router.push('/');
 };
-</script>
+</script>    
 
 
 
