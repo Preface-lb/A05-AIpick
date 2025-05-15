@@ -63,7 +63,7 @@
                         <span class="sub-menu-text">教室预约</span>
                       </button>
                     </li>
-                    <li class="sub-menu-item" :class="{ 'active': activeIndex === '2-2' }">
+                    <!-- <li class="sub-menu-item" :class="{ 'active': activeIndex === '2-2' }">
                       <button @click="handleSelect('2-2')" class="sub-menu-link">
                         <span class="sub-menu-text">设备预约</span>
                       </button>
@@ -72,7 +72,7 @@
                       <button @click="handleSelect('2-3')" class="sub-menu-link">
                         <span class="sub-menu-text">租用记录</span>
                       </button>
-                    </li>
+                    </li> -->
                   </ul>
                 </transition>
               </li>
@@ -123,27 +123,28 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, markRaw } from 'vue';
 import { useRouter } from 'vue-router';
-import { Calendar, FolderOpened, Setting } from '@element-plus/icons-vue';
+import { Calendar, FolderOpened, Setting, Edit, Fold } from '@element-plus/icons-vue';
 import PersonalSchedule from '@/views/teacher/teamain/Teaclass.vue';
 import ClassroomReservation from '@/views/teacher/teamain/ClassroomBooking.vue';
 import EquipmentReservation from '@/views/teacher/teamain/EquipmentReservation.vue';
 import RentalRecords from '@/views/teacher/teamain/RentalRecords.vue';
 import TeacherPreferences from '@/views/teacher/teamain/ClassPreferences.vue';
+import { getUserInfo } from '@/api/teacher';
 
 // 状态管理
 const activeIndex = ref('1');
-const currentComponent = ref(PersonalSchedule);
+const currentComponent = ref(markRaw(PersonalSchedule));
 const collapsed = ref(false);
 const resourceMenuOpen = ref(false);
-const isMobile = ref(false);
 
 // 用户数据
-const userName = ref('裴涛');
-const userClass = ref('信息智能工程学院');
-const userRole = ref('教师');
+const userName   = ref('');
+const userClass  = ref('');
+const userRole   = ref('');
 const userAvatar = ref(require('@/assets/PIC/teapic.png'));
+const loading    = ref(false);
 
 // 计算属性：页面标题
 const pageTitle = computed(() => {
@@ -155,64 +156,57 @@ const pageTitle = computed(() => {
   return '';
 });
 
+// 获取并绑定用户信息
+const fetchUserInfo = async () => {
+  loading.value = true;
+  try {
+    const res = await getUserInfo();
+    console.log('获取用户信息成功:', res);
+    // 直接使用 res，因为响应拦截器已经返回了 data 字段
+    userName.value  = res.name      || '教师姓名';
+    userClass.value = res.workUnit  || '未知单位';
+    userRole.value  = res.nationality || '未知身份';
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+  } finally {
+    loading.value = false;
+  }
+};
 
 // 方法
 const handleSelect = (index) => {
   activeIndex.value = index;
-  // 当选择资源管理子菜单时，可保证菜单处于展开状态
-  if (index.startsWith('2')) {
-    resourceMenuOpen.value = true;
-  }
-  if (index === '1') {
-    currentComponent.value = PersonalSchedule;
-  } else if (index === '2-1') {
-    currentComponent.value = ClassroomReservation;
-  } else if (index === '2-2') {
-    currentComponent.value = EquipmentReservation;
-  } else if (index === '2-3') {
-    currentComponent.value = RentalRecords;
-  } else if (index === '3') {
-    currentComponent.value = TeacherPreferences;
+  if (index.startsWith('2')) resourceMenuOpen.value = true;
+  switch(index) {
+    case '1':   currentComponent.value = markRaw(PersonalSchedule);      break;
+    case '2-1': currentComponent.value = markRaw(ClassroomReservation); break;
+    case '2-2': currentComponent.value = markRaw(EquipmentReservation); break;
+    case '2-3': currentComponent.value = markRaw(RentalRecords);         break;
+    case '3':   currentComponent.value = markRaw(TeacherPreferences);   break;
   }
 };
-
-const toggleResourceMenu = () => {
-  resourceMenuOpen.value = !resourceMenuOpen.value;
-};
-
-const handleConfirm = () => {
-  console.log('Confirm action');
-};
-
-const toggleSidebar = () => {
-  collapsed.value = !collapsed.value;
-};
-
-// 检查是否为移动端
-onMounted(() => {
-  const checkIfMobile = () => {
-    isMobile.value = window.innerWidth < 768;
-    if (isMobile.value && !collapsed.value) {
-      collapsed.value = true;
-    }
-  };
-
-  checkIfMobile();
-  window.addEventListener('resize', checkIfMobile);
-
-  // 清理
-  return () => {
-    window.removeEventListener('resize', checkIfMobile);
-  };
-});
+const toggleResourceMenu = () => resourceMenuOpen.value = !resourceMenuOpen.value;
+const handleConfirm      = () => console.log('Confirm action');
+const toggleSidebar      = () => collapsed.value = !collapsed.value;
 
 // 退出登录
 const router = useRouter();
-
 const handleLogout = () => {
-  // 执行退出登录的逻辑，比如清除 token 等
-  router.push('/'); 
+  // 清除 token 等逻辑
+  router.push('/');
 };
+
+// 初始化
+onMounted(() => {
+  fetchUserInfo();
+  const checkIfMobile = () => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile && !collapsed.value) collapsed.value = true;
+  };
+  checkIfMobile();
+  window.addEventListener('resize', checkIfMobile);
+  return () => window.removeEventListener('resize', checkIfMobile);
+});
 </script>
 
 

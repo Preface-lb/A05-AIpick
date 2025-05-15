@@ -20,13 +20,13 @@ interface CourseTableResponse {
 }
 
 // 获取课程表数据
-export const getCourseTable = (whichWeek: number): Promise<CourseTableResponse['data']> => {
+export const getCourseTable = (whichWeek: number,semester:string): Promise<CourseTableResponse['data']> => {
 
 
   // 生产环境调用后端接口
   return request({
     url: '/teacher/courseTable',
     method: 'get',
-    params: { whichWeek },
+    params: { whichWeek,semester },
   }) as Promise<CourseTableResponse['data']>;
 };

@@ -8,7 +8,7 @@ import request from '@/utils/request'
  */
 export const adminLogin = (account: string, password: string) => {
   return request({
-    url: '/api/admin/login', // 根据你的后端接口修改路径
+    url: '/admin/login', // 根据你的后端接口修改路径
     method: 'post',
     data: { account, password }
   })

@@ -34,14 +34,14 @@
           <div class="form-group">
             <label>用户名</label>
             <input
-              v-model="username"
+              v-model="account"
               type="text"
               placeholder="请输入用户名"
-              @focus="focusInput('username')"
-              @blur="blurInput('username')"
+              @focus="focusInput('account')"
+              @blur="blurInput('account')"
             />
-            <span v-if="usernameError" class="error-message">{{
-              usernameError
+            <span v-if="accountError" class="error-message">{{
+              accountError
             }}</span>
           </div>
 
@@ -74,85 +74,87 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { adminLogin } from '@/api/admin-auth' 
+import { ref } from 'vue';
+import { adminLogin } from '@/api/admin-auth';
+import { useRouter } from 'vue-router';
 
-const account = ref('') 
-const password = ref('')
-const accountError = ref('') 
-const passwordError = ref('')
-const isSubmitting = ref(false)
+const router = useRouter(); // 引入路由对象
+
+const account = ref(''); // 管理员用户名
+const password = ref(''); // 登录密码
+const accountError = ref(''); // 用户名错误信息
+const passwordError = ref(''); // 密码错误信息
+const isSubmitting = ref(false); // 是否正在提交
 
 const handleLogin = async () => {
   // 清空之前的错误信息
-  accountError.value = '' 
-  passwordError.value = ''
+  accountError.value = '';
+  passwordError.value = '';
 
   // 校验用户名和密码
-  if (!account.value.trim()) { 
-    accountError.value = '用户名不能为空' 
-    return
+  if (!account.value.trim()) {
+    accountError.value = '用户名不能为空';
+    return;
   }
   if (!password.value.trim()) {
-    passwordError.value = '密码不能为空'
-    return
+    passwordError.value = '密码不能为空';
+    return;
   }
 
   // 调用后端接口
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const response = await adminLogin({
-      account: account.value, 
-      password: password.value
-    })
-    console.log('登录成功:', response.data)
-    
-    
-    let responseData
-    try {
-      responseData = JSON.parse(response.data)
-    } catch (error) {
-      console.error('解析 JSON 字符串失败:', error)
-      throw new Error('解析登录响应失败')
+    const data = await adminLogin(account.value, password.value);
+    console.log('登录成功:', data);
+
+    // 检查 tokenValue 是否存在
+    if (data?.tokenValue) {
+      // 保存 token 到本地存储
+      localStorage.setItem('adminToken', data.tokenValue);
+      // 跳转到管理员主页
+      router.push('/administrator');
+    } else {
+      // 登录失败：未获取到 token
+      console.error('登录失败: 未获取到 token');
+      passwordError.value = '登录失败: 未获取到 token';
     }
-    
-    
-    console.log('解析后的数据:', responseData)
-    
   } catch (error) {
-    console.error('登录失败:', error)
-    
-    let errorMessage = '登录失败，请重试'
-    if (error.response && error.response.data) {
-      try {
-        const errorData = JSON.parse(error.response.data)
-        errorMessage = errorData.message || errorMessage
-      } catch {
-        errorMessage = error.response.data || errorMessage
-      }
+    console.error('登录失败:', error);
+
+    // 设置错误信息
+    passwordError.value = '登录失败，请稍后再试';
+    if (error instanceof Error) {
+      passwordError.value = error.message || '登录失败，请稍后再试';
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      passwordError.value = error.message || '登录失败，请稍后再试';
     }
-    accountError.value = errorMessage 
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
+    // 可以在这里添加额外的逻辑，例如重置表单状态
+    // account.value = '';
+    // password.value = '';
+    // accountError.value = '';
+    // passwordError.value = '';
   }
-}
+};
 
 const focusInput = (type) => {
-  if (type === 'account') { 
-    accountError.value = '' 
+  if (type === 'account') {
+    accountError.value = '';
   } else if (type === 'password') {
-    passwordError.value = ''
+    passwordError.value = '';
   }
-}
+};
 
 const blurInput = (type) => {
-  if (type === 'account' && !account.value.trim()) { 
-    accountError.value = '用户名不能为空' 
+  if (type === 'account' && !account.value.trim()) {
+    accountError.value = '用户名不能为空';
   } else if (type === 'password' && !password.value.trim()) {
-    passwordError.value = '密码不能为空'
+    passwordError.value = '密码不能为空';
   }
-}
+};
 </script>
+
 
 <style scoped>
 @import '@/style/global.css';
