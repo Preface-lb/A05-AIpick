@@ -25,6 +25,29 @@ export interface ClassroomFilters {
   classroomType?: string;
 }
 
+// 新增：预约时间段数据类型
+export interface BookingTimeSlots {
+  one: number;
+  two: number;
+  three: number;
+  four: number;
+  five: number;
+  six: number;
+  seven: number;
+  eight: number;
+  nine: number;
+  ten: number;
+  eleven: number;
+  classroomId: number;
+}
+
+// 新增：预约结果类型
+export interface BookingResult {
+  code: number;
+  message: string;
+  data?: any;
+}
+
 export const getCourseTable = (
   pageNum: number,
   pageSize: number,
@@ -40,3 +63,14 @@ export const getCourseTable = (
     },
   });
 };
+
+// 新增：预约教室接口
+export const submitClassroomBooking = (
+  bookingData: BookingTimeSlots
+): Promise<BookingResult> => {
+  return request({
+    url: '/teacher/reserve',
+    method: 'put',
+    data: bookingData,
+  });
+};  
