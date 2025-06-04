@@ -80,10 +80,13 @@
           <el-button 
             v-if="activeStep === 6" 
             type="success" 
-            @click="startScheduling" 
+            :loading="isScheduling" 
+            @click="handleStartScheduling" 
             class="start-button"
           >
-            开始排课 <el-icon><CaretRight /></el-icon>
+            {{ isScheduling ? '排课中...' : '开始排课' }} 
+            <el-icon v-show="!isScheduling"><CaretRight /></el-icon>
+            <el-icon v-show="isScheduling"><Loading /></el-icon>
           </el-button>
         </div>
       </div>
@@ -149,8 +152,10 @@ import {
   ArrowLeft,
   ArrowRight,
   InfoFilled,
-  SwitchButton
+  SwitchButton,
+  Loading
 } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 引入各个步骤对应的组件
 import CourseSelection from '@/views/administrator/admini/CourseSelection.vue'
@@ -161,11 +166,15 @@ import BanSettings from '@/views/administrator/admini/BanSettings.vue'
 import AIWeights from '@/views/administrator/admini/AIWeights.vue'
 import StartScheduling from '@/views/administrator/admini/StartScheduling.vue'
 
+// 引入API
+import { arrangeCourse } from '@/api/start-button'
+
 const activeStep = ref(0)
 const currentComponent = ref(CourseSelection) // 默认显示课程选择组件
 const router = useRouter()
+const isScheduling = ref(false) // 排课加载状态
 
-// 步骤配置 - 移除了icon字段，因为我们直接在模板中使用组件
+// 步骤配置
 const steps = [
   { 
     key: 'course-selection', 
@@ -224,6 +233,7 @@ const componentMap = computed(() => ({
   'start-scheduling': StartScheduling
 }))
 
+// 步骤导航方法
 function goToStep(stepName) {
   activeStep.value = stepMap[stepName]
   currentComponent.value = componentMap.value[stepName]
@@ -247,12 +257,19 @@ function getStepTitle(stepIndex) {
   return steps[stepIndex].title
 }
 
-function startScheduling() {
-  // 实际排课逻辑
-  console.log('开始排课');
+// 开始排课逻辑
+function handleStartScheduling() {
+  // 防止重复点击
+  if (isScheduling.value) return
+
+  isScheduling.value = true // 显示加载状态
   
-  // 跳转到 /administratorclass 路由
-  router.push('/administratorclass');
+  arrangeCourse() // 调用排课API
+    .finally(() => {
+      // 无论请求成功或失败，都隐藏加载状态并跳转
+      isScheduling.value = false
+      router.push('/administratorclass')
+    })
 }
 </script>
   
