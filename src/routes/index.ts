@@ -20,7 +20,7 @@ const NotPermission = import('@/component/not-permission-page/index.vue')
 export const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('../component/main-layout/index.vue'),
+    component: () => import('../component/main-layout/index.vue'),//重点在这里，使用异步组件
     children: [...homeRoute, ...chooseRoute, ...TeaLoginRoute, ...StuLoginRoute, ...StuRegisterRoute, ...AdminLoginRoute, ...StudentRoute, ...TeacherRoute, ...AdministratorRoute, ...AdministratorclassRoute, ...AdministratorpickRoute],
   }
 ]

@@ -1,1207 +1,1826 @@
 <template>
-  <div class="classroom-container">
-    <!-- Dashboard Header -->
-    <div class="dashboard-header">
-      <div class="header-title">
-        <h1>教室管理系统</h1>
-        <p class="subtitle">实时监控教室使用情况和排课信息</p>
+  <div class="schedule-container">
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="page-title">
+          <Calendar class="title-icon" />
+          课程调度系统
+        </h1>
+        <p class="page-subtitle">智能课程管理与多周跨越调课</p>
       </div>
-      <div class="header-stats">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <el-icon><School/></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalClassrooms }}</div>
-            <div class="stat-label">总教室数</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon active-icon">
-            <el-icon><VideoPlay/></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ activeClassrooms }}</div>
-            <div class="stat-label">使用中</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon free-icon">
-            <el-icon><Finished /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ freeClassrooms }}</div>
-            <div class="stat-label">空闲中</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 搜索和筛选区域 -->
-    <div class="control-panel">
-      <div class="search-filter">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索教室名称、授课老师"
-          class="search-input"
-          clearable
+      <div class="header-actions">
+        <button 
+          @click="toggleAdjustMode" 
+          class="action-btn"
+          :class="{ 'active': isAdjustMode }"
         >
-          <template #prefix>
-            <el-icon class="search-icon"><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-select v-model="filterStatus" placeholder="全部状态" class="status-select">
-          <el-option label="全部状态" value="" />
-          <el-option label="使用中" value="使用中" />
-          <el-option label="空闲" value="空闲" />
-        </el-select>
-        <el-select v-model="filterCapacity" placeholder="容量筛选" class="capacity-select">
-          <el-option label="全部容量" value="" />
-          <el-option label="小型 (<50人)" value="small" />
-          <el-option label="中型 (50-100人)" value="medium" />
-          <el-option label="大型 (>100人)" value="large" />
-        </el-select>
-      </div>
-      <div class="action-buttons">
-        <el-button type="primary" @click="refreshData">
-          <el-icon><Refresh /></el-icon>刷新数据
-        </el-button>
-        <el-button @click="exportData">
-          <el-icon><Download /></el-icon>导出数据
-        </el-button>
+          <MoveHorizontal class="action-icon" />
+          {{ isAdjustMode ? '退出调课' : '开始调课' }}
+        </button>
       </div>
     </div>
 
-    <!-- 教室列表表格 -->
-    <el-card class="table-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span>教室列表</span>
-          <span class="result-count">共 {{ filteredClassrooms.length }} 条结果</span>
+    <!-- Query Section -->
+    <div class="card">
+      <div class="card-header">
+        <Search class="card-icon" />
+        <span class="card-title">查询条件</span>
+      </div>
+      <div class="query-form">
+        <div class="form-group">
+          <label class="form-label">学期</label>
+          <input 
+            v-model="semester" 
+            placeholder="请输入学期，如：202402" 
+            class="form-input"
+            type="text"
+          />
         </div>
-      </template>
-      <el-table
-        :data="filteredClassrooms"
-        style="width: 100%"
-        border
-        stripe
-        highlight-current-row
-        class="classroom-table"
-        v-loading="tableLoading"
-      >
-        <el-table-column prop="name" label="教室名称" min-width="120">
-          <template #default="scope">
-            <div class="classroom-name">
-              <el-icon><OfficeBuilding /></el-icon>
-              <span>{{ scope.row.name }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="capacity" label="容量" min-width="100">
-          <template #default="scope">
-            <el-tag 
-              :type="getCapacityTagType(scope.row.capacity)" 
-              size="small" 
-              effect="light"
-            >
-              {{ scope.row.capacity }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="当前状态" min-width="120">
-          <template #default="scope">
-            <div class="status-indicator">
-              <span
-                :class="['status-dot', scope.row.status === '使用中' ? 'active' : 'inactive']"
-              ></span>
-              <span :class="['status-text', scope.row.status === '使用中' ? 'text-active' : 'text-inactive']">
-                {{ scope.row.status }}
-              </span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="teacher" label="授课老师" min-width="120">
-          <template #default="scope">
-            <div class="teacher-info" v-if="scope.row.teacher">
-              <el-avatar :size="24" class="teacher-avatar">
-                {{ getTeacherInitials(scope.row.teacher) }}
-              </el-avatar>
-              <span>{{ scope.row.teacher }}</span>
-            </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="course" label="当前课程" min-width="150" />
-        <el-table-column prop="lastUpdated" label="最后更新" min-width="150" />
-        <el-table-column prop="lastUpdated" label="操作" min-width="150" >
-          <template #default="scope">
-            <div class="action-column">
-              <el-tooltip content="查看排课详情" placement="top" :show-after="300">
-                <el-button
-                  type="primary"
-                  size="small"
-                  circle
-                  @click="showScheduleDetails(scope.row)"
-                >
-                  <el-icon><Calendar /></el-icon>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="查看设备信息" placement="top" :show-after="300">
-                <el-button
-                  type="info"
-                  size="small"
-                  circle
-                >
-                  <el-icon><Monitor /></el-icon>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="编辑信息" placement="top" :show-after="300">
-                <el-button
-                  type="warning"
-                  size="small"
-                  circle
-                >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
-              </el-tooltip>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+        <div class="form-group">
+          <label class="form-label">周次</label>
+          <input 
+            v-model="week" 
+            placeholder="周次" 
+            class="form-input"
+            type="number"
+            min="1"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">教师姓名</label>
+          <input 
+            v-model="teacher" 
+            placeholder="请输入教师姓名" 
+            class="form-input"
+            type="text"
+          />
+        </div>
+        <button 
+          @click="confirmInfo" 
+          class="primary-btn"
+          :disabled="loading"
+        >
+          <Search class="btn-icon" />
+          {{ loading ? '查询中...' : '查询' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="card week-navigation">
+      <div class="week-controls">
+        <button @click="jumpWeeks(-5)" class="week-jump-btn" :disabled="loading || currentDisplayWeek <= 5">
+          <ChevronsLeft class="nav-icon" />
+          -5周
+        </button>
+        <button @click="changeWeek(-1)" class="week-nav-btn" :disabled="loading || currentDisplayWeek <= 1">
+          <ChevronLeft class="nav-icon" />
+          上一周
+        </button>
+        <div class="week-display">
+          <span class="week-text">第 {{ currentDisplayWeek }} 周</span>
+          <span class="week-date">{{ getWeekDateRange(currentDisplayWeek) }}</span>
+        </div>
+        <button @click="changeWeek(1)" class="week-nav-btn" :disabled="loading">
+          下一周
+          <ChevronRight class="nav-icon" />
+        </button>
+        <button @click="jumpWeeks(5)" class="week-jump-btn" :disabled="loading">
+          +5周
+          <ChevronsRight class="nav-icon" />
+        </button>
+      </div>
       
-      <div class="table-pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredClassrooms.length"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
-
-    <!-- 排课详情弹窗 -->
-    <el-dialog
-      v-model="scheduleDialogVisible"
-      title="排课详情"
-      width="80%"
-      class="schedule-dialog"
-      destroy-on-close
-    >
-      <div class="schedule-info-header">
-        <div class="classroom-detail">
-          <h2>{{ selectedClassroom?.name }}</h2>
-          <div class="classroom-meta">
-            <el-tag size="small">容量: {{ selectedClassroom?.capacity }}</el-tag>
-            <el-tag 
-              :type="selectedClassroom?.status === '使用中' ? 'danger' : 'success'" 
-              size="small"
-              effect="dark"
-            >
-              {{ selectedClassroom?.status }}
-            </el-tag>
-          </div>
+      <div v-if="isAdjustMode && isDragging" class="drag-status">
+        <div class="drag-info">
+          <span class="drag-label">拖拽课程:</span>
+          <span class="drag-value">{{ draggedCourse?.name }}</span>
         </div>
-        <div class="date-navigation">
-          <el-button-group>
-            <el-button @click="prevDate" :icon="ArrowLeft">上一天</el-button>
-            <el-button type="primary" @click="selectDateDialog = true">
-              {{ currentDate }}
-              <el-icon class="el-icon--right"><Calendar /></el-icon>
-            </el-button>
-            <el-button @click="nextDate" :icon="ArrowRight">下一天</el-button>
-          </el-button-group>
-          <el-radio-group v-model="viewType" size="small" class="view-type-toggle">
-            <el-radio-button label="day">日视图</el-radio-button>
-            <el-radio-button label="week">周视图</el-radio-button>
-          </el-radio-group>
+        <div class="drag-info">
+          <span class="drag-label">原始周次:</span>
+          <span class="drag-value">第 {{ originalWeek }} 周</span>
+        </div>
+        <div class="drag-info">
+          <span class="drag-label">目标周次:</span>
+          <span class="drag-value">第 {{ currentDisplayWeek }} 周</span>
+          <span v-if="currentDisplayWeek !== originalWeek" class="cross-week-badge">
+            {{ currentDisplayWeek > originalWeek ? '向后' : '向前' }}跨 {{ Math.abs(currentDisplayWeek - originalWeek) }} 周
+          </span>
+        </div>
+        <div class="drag-info">
+          <span class="drag-label">可用时间槽:</span>
+          <span class="drag-value">{{ availableSlots.length }}个</span>
         </div>
       </div>
+    </div>
 
-      <div class="schedule-timeline">
-        <div class="timeline-header">
-          <div class="time-label">时间</div>
-          <div class="timeline-hours">
-            <div v-for="hour in 12" :key="hour" class="hour-marker">
-              {{ hour + 7 }}:00
-            </div>
+    <!-- Course Table -->
+    <div class="card table-card">
+      <div class="card-header">
+        <BookOpen class="card-icon" />
+        <span class="card-title">课程安排表</span>
+        <div class="table-info" v-if="teacher">
+          <User class="info-icon" />
+          {{ teacher }} 老师 - {{ semester }} 学期
+        </div>
+      </div>
+      
+      <div v-if="isAdjustMode" class="adjust-mode-tips">
+        <div class="tip-item">
+          <MousePointer class="tip-icon" />
+          <span>拖拽课程卡片边缘到可用时间槽</span>
+        </div>
+        <div class="tip-item">
+          <ArrowLeftRight class="tip-icon" />
+          <span>拖到左右边界可跨周调课</span>
+        </div>
+      </div>
+      
+      <!-- 跨周提示区域 - 移到表格外部 -->
+      <div v-if="isDragging" class="cross-week-zones">
+        <div 
+          class="cross-week-zone cross-week-zone-left"
+          :class="{ 'active': isInLeftZone }"
+          @dragover.prevent="handleLeftZoneDragOver"
+          @dragleave="handleLeftZoneDragLeave"
+        >
+          <div class="cross-week-content">
+            <ChevronLeft class="cross-week-icon" />
+            <span class="cross-week-text">向前跨周</span>
+            <span class="cross-week-week">第{{ Math.max(1, currentDisplayWeek - 1) }}周</span>
           </div>
+        </div>
+
+        <div 
+          class="cross-week-zone cross-week-zone-right"
+          :class="{ 'active': isInRightZone }"
+          @dragover.prevent="handleRightZoneDragOver"
+          @dragleave="handleRightZoneDragLeave"
+        >
+          <div class="cross-week-content">
+            <ChevronRight class="cross-week-icon" />
+            <span class="cross-week-text">向后跨周</span>
+            <span class="cross-week-week">第{{ currentDisplayWeek + 1 }}周</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-container" :class="{ 'loading': loading, 'adjust-mode': isAdjustMode }">
+        <div v-if="loading" class="loading-overlay">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">{{ loadingText }}</p>
         </div>
         
-        <div class="timeline-content">
-          <div class="timeline-slots">
+        <div 
+          ref="scheduleTable"
+          class="schedule-table"
+          @dragover="handleTableDragOver"
+          @wheel="handleWheel"
+        >
+          <div class="table-header-row">
+            <div class="time-header">时间</div>
             <div 
-              v-for="(detail, index) in scheduleDetails" 
+              v-for="(day, index) in days" 
               :key="index"
-              class="time-slot-row"
+              class="day-header"
             >
-              <div class="time-label">{{ detail.time }}</div>
+              <div class="day-name">{{ day }}</div>
+              <div class="day-date">{{ getDayDate(index, currentDisplayWeek) }}</div>
+            </div>
+          </div>
+          
+          <div class="table-body">
+            <div 
+              v-for="(timeSlot, timeIndex) in timeSlots" 
+              :key="timeIndex"
+              class="table-row"
+            >
+              <div class="time-cell">
+                <Clock class="time-icon" />
+                <span class="time-text">{{ timeSlot }}</span>
+              </div>
               <div 
-                class="time-slot-content"
-                :class="{
-                  'slot-active': detail.status === '正在使用',
-                  'slot-free': detail.status === '空闲中',
-                  'slot-reserved': detail.status === '预排课'
+                v-for="(day, dayIndex) in days" 
+                :key="dayIndex"
+                class="course-cell"
+                :class="{ 
+                  'has-course': hasCourse(dayIndex + 1, timeIndex),
+                  'droppable': isDroppable(dayIndex + 1, timeIndex),
+                  'drag-over': isDragOver(dayIndex + 1, timeIndex),
+                  'highlight-available': isAdjustMode && isAvailableSlot(dayIndex + 1, timeIndex)
                 }"
+                @dragover.prevent="handleDragOver(dayIndex + 1, timeIndex)"
+                @dragleave="handleDragLeave()"
+                @drop.prevent="handleDrop(dayIndex + 1, timeIndex)"
               >
-                <div v-if="detail.status !== '空闲中'" class="slot-details">
-                  <div class="slot-title">
-                    <span class="slot-status">{{ detail.status }}</span>
-                    <span v-if="detail.course" class="slot-course">{{ detail.course }}</span>
+                <div 
+                  v-if="hasCourse(dayIndex + 1, timeIndex)"
+                  class="course-content"
+                  :class="{ 'draggable': isAdjustMode }"
+                  :draggable="isAdjustMode"
+                  @dragstart="handleDragStart($event, dayIndex + 1, timeIndex)"
+                  @mousedown="handleMouseDown"
+                  @mouseup="handleMouseUp"
+                >
+                  <div class="drag-handle" v-if="isAdjustMode">
+                    <div class="drag-dots">
+                      <div class="dot"></div>
+                      <div class="dot"></div>
+                      <div class="dot"></div>
+                    </div>
                   </div>
-                  <div class="slot-info">
-                    <span v-if="detail.user" class="slot-user">{{ detail.user }}</span>
-                    <span v-if="detail.teacher" class="slot-teacher">{{ detail.teacher }}</span>
+                  <div class="course-info">
+                    <div class="course-name">
+                      {{ getCourse(dayIndex + 1, timeIndex).name }}
+                    </div>
+                    <div class="course-room">
+                      <MapPin class="room-icon" />
+                      {{ getCourse(dayIndex + 1, timeIndex).room }}
+                    </div>
+                    <div class="course-teacher" v-if="getCourse(dayIndex + 1, timeIndex).teacher">
+                      <User class="teacher-icon" />
+                      {{ getCourse(dayIndex + 1, timeIndex).teacher }}
+                    </div>
                   </div>
                 </div>
-                <div v-else class="slot-free-label">空闲</div>
+                <div v-else-if="isAdjustMode && isAvailableSlot(dayIndex + 1, timeIndex)" class="available-slot">
+                  <CheckCircle class="available-icon" />
+                  <span>可用时间槽</span>
+                </div>
+                <div v-else class="empty-cell">
+                  <span class="empty-text">无课程</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="scheduleDialogVisible = false">关闭</el-button>
-          <el-button type="primary" @click="printSchedule">打印课表</el-button>
+    <!-- Adjustment Confirmation Dialog -->
+    <div v-if="showConfirmDialog" class="dialog-overlay">
+      <div class="dialog-container">
+        <div class="dialog-header">
+          <h3 class="dialog-title">确认调课</h3>
+          <button @click="cancelAdjustment" class="dialog-close-btn">
+            <X class="close-icon" />
+          </button>
         </div>
-      </template>
-    </el-dialog>
-
-    <!-- 日期选择弹窗 -->
-    <el-dialog
-      v-model="selectDateDialog"
-      title="选择日期"
-      width="400px"
-      append-to-body
-      class="date-select-dialog"
-      align-center
-    >
-      <div class="date-picker-container">
-        <el-calendar v-model="calendarValue" @click="handleCalendarDateClick" />
+        <div class="dialog-content">
+          <p class="dialog-text">您确定要将以下课程进行调整吗？</p>
+          <div class="course-details">
+            <div class="detail-item">
+              <span class="detail-label">课程:</span>
+              <span class="detail-value">{{ draggedCourse.name || '未知课程' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">教室:</span>
+              <span class="detail-value">{{ draggedCourse.room || '未知教室' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">原时间:</span>
+              <span class="detail-value">第{{ originalWeek }}周 {{ days[draggedDay - 1] }} {{ timeSlots[draggedTimeSlot] }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">调整至:</span>
+              <span class="detail-value">第{{ targetWeek }}周 {{ days[targetDay - 1] }} {{ timeSlots[targetTimeSlot] }}</span>
+            </div>
+            <div v-if="originalWeek !== targetWeek" class="detail-item cross-week-notice">
+              <span class="detail-label">注意:</span>
+              <span class="detail-value">
+                {{ targetWeek > originalWeek ? '向后' : '向前' }}跨 {{ Math.abs(originalWeek - targetWeek) }} 周调课操作
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button @click="cancelAdjustment" class="dialog-btn dialog-btn-cancel">取消</button>
+          <button @click="confirmAdjustment" class="dialog-btn dialog-btn-confirm" :disabled="adjustmentLoading">
+            {{ adjustmentLoading ? '调课中...' : '确认调课' }}
+          </button>
+        </div>
       </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="selectDateDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmDateSelection">确定</el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </div>
+
+    <!-- Toast Notification -->
+    <div v-if="toastMessage" class="toast-notification" :class="{ 'show': showToast }">
+      <div class="toast-content">
+        <CheckCircle v-if="toastType === 'success'" class="toast-icon toast-success" />
+        <AlertCircle v-else class="toast-icon toast-error" />
+        <span class="toast-text">{{ toastMessage }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
 import { 
-  Search, 
-  Calendar, 
-  ArrowLeft, 
-  ArrowRight, 
-  Refresh, 
-  Download, 
-  Edit, 
-  Monitor, 
-  OfficeBuilding,
-  School,
-  VideoPlay,
-  Finished
-} from '@element-plus/icons-vue';
+  Calendar, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  BookOpen, User, Clock, MapPin, CheckCircle, AlertCircle, MoveHorizontal, X,
+  MousePointer, ArrowLeftRight
+} from 'lucide-vue-next'
+import { getTeacherCourseTable } from '@/api/admin/teacoursetable'
+import { queryAvailableSlots, sendAdjustmentRequest } from '@/api/admin/classchange'
 
 export default {
-  name: 'ClassroomManagement',
+  name: 'TeacherScheduleAdjustment',
   components: {
-    Search,
-    Calendar,
-    ArrowLeft,
-    ArrowRight
+    Calendar, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    BookOpen, User, Clock, MapPin, CheckCircle, AlertCircle, MoveHorizontal, X,
+    MousePointer, ArrowLeftRight
   },
-  setup() {
-    // 搜索关键词
-    const searchKeyword = ref('');
-    // 状态筛选
-    const filterStatus = ref('');
-    // 容量筛选
-    const filterCapacity = ref('');
-    // 表格加载状态
-    const tableLoading = ref(false);
-    // 分页
-    const currentPage = ref(1);
-    const pageSize = ref(10);
-    // 视图类型
-    const viewType = ref('day');
-    // 日历值
-    const calendarValue = ref(new Date());
-    
-    // 教室列表数据 - 增加到10条模拟数据
-    const classrooms = ref([
-      {
-        id: 1,
-        name: '东教学楼-301',
-        capacity: '100人',
-        status: '使用中',
-        teacher: '张教授',
-        course: '高等数学',
-        lastUpdated: '2025-03-07 08:30:22',
-        equipment: ['投影仪', '电脑', '音响系统']
-      },
-      {
-        id: 2,
-        name: '东教学楼-302',
-        capacity: '80人',
-        status: '空闲',
-        teacher: '',
-        course: '',
-        lastUpdated: '2025-03-07 09:15:10',
-        equipment: ['投影仪', '电脑']
-      },
-      {
-        id: 3,
-        name: '西教学楼-101',
-        capacity: '120人',
-        status: '使用中',
-        teacher: '李教授',
-        course: '大学物理',
-        lastUpdated: '2025-03-07 10:05:33',
-        equipment: ['投影仪', '电脑', '实验设备']
-      },
-      {
-        id: 4,
-        name: '西教学楼-102',
-        capacity: '60人',
-        status: '空闲',
-        teacher: '',
-        course: '',
-        lastUpdated: '2025-03-07 08:45:17',
-        equipment: ['投影仪', '电脑']
-      },
-      {
-        id: 5,
-        name: '综合楼-501',
-        capacity: '200人',
-        status: '使用中',
-        teacher: '王教授',
-        course: '计算机科学导论',
-        lastUpdated: '2025-03-07 09:30:45',
-        equipment: ['投影仪', '电脑', '音响系统', '智能黑板']
-      },
-      {
-        id: 6,
-        name: '综合楼-502',
-        capacity: '150人',
-        status: '使用中',
-        teacher: '刘教授',
-        course: '数据结构',
-        lastUpdated: '2025-03-07 10:15:28',
-        equipment: ['投影仪', '电脑', '音响系统']
-      },
-      {
-        id: 7,
-        name: '实验楼-201',
-        capacity: '40人',
-        status: '空闲',
-        teacher: '',
-        course: '',
-        lastUpdated: '2025-03-07 11:00:12',
-        equipment: ['投影仪', '电脑', '实验设备']
-      },
-      {
-        id: 8,
-        name: '实验楼-202',
-        capacity: '40人',
-        status: '使用中',
-        teacher: '赵教授',
-        course: '化学实验',
-        lastUpdated: '2025-03-07 09:50:39',
-        equipment: ['投影仪', '电脑', '实验设备', '通风系统']
-      },
-      {
-        id: 9,
-        name: '图书馆-301',
-        capacity: '30人',
-        status: '空闲',
-        teacher: '',
-        course: '',
-        lastUpdated: '2025-03-07 10:40:55',
-        equipment: ['投影仪', '电脑', '电子白板']
-      },
-      {
-        id: 10,
-        name: '图书馆-302',
-        capacity: '30人',
-        status: '使用中',
-        teacher: '钱教授',
-        course: '文献检索',
-        lastUpdated: '2025-03-07 11:20:07',
-        equipment: ['投影仪', '电脑', '电子白板']
-      }
-    ]);
-    
-    // 当前选中的教室
-    const selectedClassroom = ref(null);
-    // 排课详情弹窗是否可见
-    const scheduleDialogVisible = ref(false);
-    // 日期选择弹窗是否可见
-    const selectDateDialog = ref(false);
-    // 当前显示的日期
-    const currentDate = ref('2025年3月7日');
-    // 选中的日期
-    const selectedDate = ref(null);
-    
-    // 排课详情数据
-    const scheduleDetails = ref([
-      {
-        time: '08:00 - 10:00',
-        status: '正在使用',
-        user: '计算机科学1班',
-        teacher: '张教授',
-        course: '高等数学'
-      },
-      {
-        time: '10:00 - 12:00',
-        status: '空闲中',
-        user: '',
-        teacher: '',
-        course: ''
-      },
-      {
-        time: '12:00 - 14:00',
-        status: '空闲中',
-        user: '',
-        teacher: '',
-        course: ''
-      },
-      {
-        time: '14:00 - 16:00',
-        status: '预排课',
-        user: '软件工程2班',
-        teacher: '王教授',
-        course: '数据库原理'
-      },
-      {
-        time: '16:00 - 18:00',
-        status: '空闲中',
-        user: '',
-        teacher: '',
-        course: ''
-      },
-      {
-        time: '18:00 - 20:00',
-        status: '预排课',
-        user: '电子工程3班',
-        teacher: '李教授',
-        course: '电路分析'
-      },
-      {
-        time: '20:00 - 22:00',
-        status: '空闲中',
-        user: '',
-        teacher: '',
-        course: ''
-      },
-    ]);
-
-    // 统计数据
-    const totalClassrooms = computed(() => classrooms.value.length);
-    const activeClassrooms = computed(() => classrooms.value.filter(c => c.status === '使用中').length);
-    const freeClassrooms = computed(() => classrooms.value.filter(c => c.status === '空闲').length);
-
-    // 过滤后的教室列表
-    const filteredClassrooms = computed(() => {
-      let result = [...classrooms.value];
-
-      // 搜索过滤
-      if (searchKeyword.value) {
-        const keyword = searchKeyword.value.toLowerCase();
-        result = result.filter(item =>
-          item.name.toLowerCase().includes(keyword) || 
-          (item.teacher && item.teacher.toLowerCase().includes(keyword)) ||
-          (item.course && item.course.toLowerCase().includes(keyword))
-        );
-      }
-
-      // 状态过滤
-      if (filterStatus.value) {
-        result = result.filter(item => item.status === filterStatus.value);
-      }
-      
-      // 容量过滤
-      if (filterCapacity.value) {
-        const capacityNumber = item => parseInt(item.capacity.replace(/[^0-9]/g, ''));
-        
-        if (filterCapacity.value === 'small') {
-          result = result.filter(item => capacityNumber(item) < 50);
-        } else if (filterCapacity.value === 'medium') {
-          result = result.filter(item => capacityNumber(item) >= 50 && capacityNumber(item) <= 100);
-        } else if (filterCapacity.value === 'large') {
-          result = result.filter(item => capacityNumber(item) > 100);
-        }
-      }
-
-      return result;
-    });
-
-    // 显示排课详情
-    const showScheduleDetails = (row) => {
-      selectedClassroom.value = row;
-      scheduleDialogVisible.value = true;
-      
-      // 模拟加载数据
-      tableLoading.value = true;
-      setTimeout(() => {
-        // 根据选中的教室更新排课详情
-        if (row.status === '使用中') {
-          scheduleDetails.value[0].teacher = row.teacher;
-          scheduleDetails.value[0].course = row.course;
-        }
-        tableLoading.value = false;
-      }, 500);
-    };
-
-    // 上一天
-    const prevDate = () => {
-      const date = new Date(calendarValue.value);
-      date.setDate(date.getDate() - 1);
-      calendarValue.value = date;
-      updateCurrentDateFromCalendar();
-      
-      ElMessage({
-        message: `已切换到 ${currentDate.value}`,
-        type: 'success'
-      });
-    };
-
-    // 下一天
-    const nextDate = () => {
-      const date = new Date(calendarValue.value);
-      date.setDate(date.getDate() + 1);
-      calendarValue.value = date;
-      updateCurrentDateFromCalendar();
-      
-      ElMessage({
-        message: `已切换到 ${currentDate.value}`,
-        type: 'success'
-      });
-    };
-    
-    // 从日历更新当前日期显示
-    const updateCurrentDateFromCalendar = () => {
-      const date = calendarValue.value;
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      currentDate.value = `${year}年${month}月${day}日`;
-    };
-    
-    // 处理日历日期点击
-    const handleCalendarDateClick = (date) => {
-      calendarValue.value = date;
-    };
-
-    // 确认日期选择
-    const confirmDateSelection = () => {
-      updateCurrentDateFromCalendar();
-      selectDateDialog.value = false;
-      
-      ElMessage({
-        message: `已选择日期: ${currentDate.value}`,
-        type: 'success'
-      });
-    };
-    
-    // 刷新数据
-    const refreshData = () => {
-      tableLoading.value = true;
-      
-      setTimeout(() => {
-        // 模拟数据刷新
-        const statusOptions = ['使用中', '空闲'];
-        classrooms.value = classrooms.value.map(classroom => {
-          // 随机更新一些教室的状态
-          if (Math.random() > 0.7) {
-            const newStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-            if (newStatus === '使用中' && classroom.status === '空闲') {
-              // 如果从空闲变为使用中，添加老师和课程
-              const teachers = ['张教授', '李教授', '王教授', '刘教授', '赵教授', '钱教授'];
-              const courses = ['高等数学', '大学物理', '计算机科学导论', '数据结构', '化学实验', '文献检索'];
-              return {
-                ...classroom,
-                status: newStatus,
-                teacher: teachers[Math.floor(Math.random() * teachers.length)],
-                course: courses[Math.floor(Math.random() * courses.length)],
-                lastUpdated: new Date().toLocaleString()
-              };
-            } else if (newStatus === '空闲' && classroom.status === '使用中') {
-              // 如果从使用中变为空闲，移除老师和课程
-              return {
-                ...classroom,
-                status: newStatus,
-                teacher: '',
-                course: '',
-                lastUpdated: new Date().toLocaleString()
-              };
-            }
-          }
-          return classroom;
-        });
-        
-        tableLoading.value = false;
-        
-        ElMessage({
-          message: '数据已刷新',
-          type: 'success'
-        });
-      }, 800);
-    };
-    
-    // 导出数据
-    const exportData = () => {
-      ElMessageBox.confirm(
-        '确定要导出当前筛选的教室数据吗？',
-        '导出确认',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'info'
-        }
-      ).then(() => {
-        ElMessage({
-          type: 'success',
-          message: '数据导出成功，共导出 ' + filteredClassrooms.value.length + ' 条记录'
-        });
-      }).catch(() => {});
-    };
-    
-    // 打印课表
-    const printSchedule = () => {
-      ElMessage({
-        message: '正在准备打印...',
-        type: 'info'
-      });
-      
-      // 实际项目中这里应该调用打印功能
-      setTimeout(() => {
-        ElMessage({
-          message: '课表打印成功',
-          type: 'success'
-        });
-      }, 1000);
-    };
-    
-    // 获取容量标签类型
-    const getCapacityTagType = (capacity) => {
-      const num = parseInt(capacity.replace(/[^0-9]/g, ''));
-      if (num < 50) return 'info';
-      if (num <= 100) return 'warning';
-      return 'danger';
-    };
-    
-    // 获取教师姓名首字母
-    const getTeacherInitials = (name) => {
-      if (!name) return '';
-      return name.charAt(0);
-    };
-    
-    // 处理页面大小变化
-    const handleSizeChange = (val) => {
-      pageSize.value = val;
-    };
-    
-    // 处理页码变化
-    const handleCurrentChange = (val) => {
-      currentPage.value = val;
-    };
-    
-    // 组件挂载时执行
-    onMounted(() => {
-      // 初始化日历值
-      calendarValue.value = new Date();
-      updateCurrentDateFromCalendar();
-      
-      // 模拟初始加载
-      tableLoading.value = true;
-      setTimeout(() => {
-        tableLoading.value = false;
-      }, 800);
-    });
-
+  data() {
     return {
-      searchKeyword,
-      filterStatus,
-      filterCapacity,
-      classrooms,
-      filteredClassrooms,
-      selectedClassroom,
-      scheduleDialogVisible,
-      selectDateDialog,
-      currentDate,
-      selectedDate,
-      scheduleDetails,
-      tableLoading,
-      currentPage,
-      pageSize,
-      viewType,
-      calendarValue,
-      totalClassrooms,
-      activeClassrooms,
-      freeClassrooms,
-      showScheduleDetails,
-      prevDate,
-      nextDate,
-      confirmDateSelection,
-      refreshData,
-      exportData,
-      printSchedule,
-      getCapacityTagType,
-      getTeacherInitials,
-      handleSizeChange,
-      handleCurrentChange,
-      handleCalendarDateClick,
-      updateCurrentDateFromCalendar,
-      // 图标
-      ArrowLeft,
-      ArrowRight,
-      Calendar,
-      Search,
-      Refresh,
-      Download,
-      Edit,
-      Monitor,
-      OfficeBuilding,
-      School,
-      VideoPlay,
-      Finished
-    };
+      semester: '202402',
+      week: 1,
+      teacher: '',
+      currentWeek: 1,
+      currentDisplayWeek: 1,
+      originalWeek: 1,
+      days: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+      timeSlots: [
+        '08:00-9:40',
+        '10:00-11:40',
+        '14:00-15:40',
+        '16:00-17:40',
+        '19:00-20:40'
+      ],
+      courses: [],
+      coursesCache: new Map(),
+      loading: false,
+      loadingText: '正在加载课程表...',
+      startDate: new Date(2025, 1, 24),
+      toastMessage: '',
+      showToast: false,
+      toastType: 'success',
+      
+      // 调课相关数据
+      isAdjustMode: false,
+      isDragging: false,
+      draggedDay: null,
+      draggedTimeSlot: null,
+      draggedCourse: null,
+      availableSlots: [],
+      availableSlotsCache: new Map(),
+      currentDragOver: null,
+      adjustmentLoading: false,
+      
+      // 跨周相关
+      isInLeftZone: false,
+      isInRightZone: false,
+      crossWeekThreshold: 60,
+      crossWeekTimer: null,
+      wheelTimer: null,
+      
+      // 确认对话框
+      showConfirmDialog: false,
+      targetDay: null,
+      targetTimeSlot: null,
+      targetWeek: null,
+      
+      // 拖拽优化
+      isDragActive: false
+    }
   },
-};
+  mounted() {
+    this.confirmInfo()
+    document.addEventListener('dragend', this.handleDragEnd)
+  },
+  beforeUnmount() {
+    document.removeEventListener('dragend', this.handleDragEnd)
+    this.clearTimers()
+  },
+  methods: {
+    clearTimers() {
+      if (this.crossWeekTimer) {
+        clearTimeout(this.crossWeekTimer)
+        this.crossWeekTimer = null
+      }
+      if (this.wheelTimer) {
+        clearTimeout(this.wheelTimer)
+        this.wheelTimer = null
+      }
+    },
+
+    async confirmInfo() {
+      if (!this.semester || !this.teacher) {
+        this.showToastMessage('请输入学期和教师姓名', 'error')
+        return
+      }
+      
+      const targetWeek = this.week || this.currentWeek
+      await this.loadCourseTable(targetWeek)
+      this.currentWeek = targetWeek
+      this.currentDisplayWeek = targetWeek
+    },
+
+    async loadCourseTable(week) {
+      const cacheKey = `${this.semester}-${week}-${this.teacher}`
+      if (this.coursesCache.has(cacheKey)) {
+        this.courses = this.coursesCache.get(cacheKey)
+        return
+      }
+
+      this.loading = true
+      this.loadingText = `正在加载第${week}周课程表...`
+      
+      try {
+        const response = await getTeacherCourseTable({
+          semester: this.semester,
+          week: week,
+          teacher: this.teacher
+        })
+        
+        const courses = this.transformCourseData(response.courseTable)
+        this.courses = courses
+        this.coursesCache.set(cacheKey, courses)
+        this.showToastMessage(`第${week}周课程表加载成功`, 'success')
+      } catch (error) {
+        console.error('请求失败:', error)
+        this.showToastMessage(error.message || '请求失败，请稍后重试', 'error')
+        this.courses = []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    transformCourseData(courseTable) {
+      const courses = []
+      const timeSlotMap = {
+        one: 0, two: 1, three: 2, four: 3,
+        five: 4, six: 5, seven: 6
+      }
+
+      courseTable.forEach(dayData => {
+        for (const [slotKey, slotIndex] of Object.entries(timeSlotMap)) {
+          const courseInfo = dayData[slotKey]
+          if (courseInfo) {
+            const [room, name, teacher] = courseInfo.split(',')
+            courses.push({
+              day: dayData.day,
+              timeSlot: slotIndex,
+              name,
+              room,
+              teacher
+            })
+          }
+        }
+      })
+
+      return courses
+    },
+    
+    async changeWeek(delta) {
+      const newWeek = this.currentDisplayWeek + delta
+      if (newWeek < 1) return
+      
+      await this.switchDisplayWeek(newWeek)
+      
+      if (!this.isDragging) {
+        this.currentWeek = newWeek
+        this.week = newWeek
+      }
+    },
+
+    async jumpWeeks(delta) {
+      const newWeek = this.currentDisplayWeek + delta
+      if (newWeek < 1) return
+      
+      await this.switchDisplayWeek(newWeek)
+      
+      if (!this.isDragging) {
+        this.currentWeek = newWeek
+        this.week = newWeek
+      }
+    },
+
+    async switchDisplayWeek(targetWeek) {
+      if (targetWeek < 1 || targetWeek === this.currentDisplayWeek) return
+      
+      this.currentDisplayWeek = targetWeek
+      await this.loadCourseTable(targetWeek)
+      
+      if (this.isDragging) {
+        await this.queryAvailableSlots(targetWeek)
+      }
+    },
+    
+    getDayDate(dayIndex, week = null) {
+      const targetWeek = week || this.currentDisplayWeek
+      const date = new Date(this.startDate)
+      date.setDate(date.getDate() + (targetWeek - 1) * 7 + dayIndex)
+      return `${date.getMonth() + 1}/${date.getDate()}`
+    },
+
+    getWeekDateRange(week = null) {
+      const targetWeek = week || this.currentDisplayWeek
+      const startDate = new Date(this.startDate)
+      startDate.setDate(startDate.getDate() + (targetWeek - 1) * 7)
+      const endDate = new Date(startDate)
+      endDate.setDate(endDate.getDate() + 6)
+      
+      return `${startDate.getMonth() + 1}月${startDate.getDate()}日 - ${endDate.getMonth() + 1}月${endDate.getDate()}日`
+    },
+    
+    hasCourse(day, timeSlotIndex) {
+      return this.courses.some(course => 
+        course.day === day && course.timeSlot === timeSlotIndex
+      )
+    },
+    
+    getCourse(day, timeSlotIndex) {
+      return this.courses.find(course => 
+        course.day === day && course.timeSlot === timeSlotIndex
+      ) || {}
+    },
+
+    showToastMessage(message, type = 'success') {
+      this.toastMessage = message
+      this.toastType = type
+      this.showToast = true
+      
+      setTimeout(() => {
+        this.showToast = false
+        setTimeout(() => {
+          this.toastMessage = ''
+        }, 300)
+      }, 3000)
+    },
+    
+    toggleAdjustMode() {
+      this.isAdjustMode = !this.isAdjustMode
+      if (!this.isAdjustMode) {
+        this.resetDragState()
+      }
+    },
+    
+    resetDragState() {
+      this.isDragging = false
+      this.isDragActive = false
+      this.draggedDay = null
+      this.draggedTimeSlot = null
+      this.draggedCourse = null
+      this.originalWeek = this.currentWeek
+      this.availableSlots = []
+      this.currentDragOver = null
+      this.isInLeftZone = false
+      this.isInRightZone = false
+      this.clearTimers()
+      
+      if (this.currentDisplayWeek !== this.currentWeek) {
+        this.switchDisplayWeek(this.currentWeek)
+      }
+    },
+
+    // 优化的鼠标事件处理
+    handleMouseDown() {
+      this.isDragActive = true
+    },
+
+    handleMouseUp() {
+      this.isDragActive = false
+    },
+
+    handleWheel(event) {
+      if (!this.isDragging) return
+      
+      event.preventDefault()
+      
+      if (this.wheelTimer) {
+        clearTimeout(this.wheelTimer)
+      }
+      
+      this.wheelTimer = setTimeout(async () => {
+        const delta = event.deltaY > 0 ? 1 : -1
+        const targetWeek = this.currentDisplayWeek + delta
+        
+        if (targetWeek >= 1) {
+          await this.switchDisplayWeek(targetWeek)
+          this.showToastMessage(`已切换到第${targetWeek}周`, 'success')
+        }
+      }, 100)
+    },
+
+    handleLeftZoneDragOver(event) {
+      event.preventDefault()
+      if (!this.isInLeftZone && this.currentDisplayWeek > 1) {
+        this.isInLeftZone = true
+        this.handleCrossWeekZoneEnter('left')
+      }
+    },
+
+    handleLeftZoneDragLeave() {
+      this.isInLeftZone = false
+      this.clearTimers()
+    },
+
+    handleRightZoneDragOver(event) {
+      event.preventDefault()
+      if (!this.isInRightZone) {
+        this.isInRightZone = true
+        this.handleCrossWeekZoneEnter('right')
+      }
+    },
+
+    handleRightZoneDragLeave() {
+      this.isInRightZone = false
+      this.clearTimers()
+    },
+
+    handleCrossWeekZoneEnter(direction) {
+      this.clearTimers()
+      
+      this.crossWeekTimer = setTimeout(async () => {
+        const delta = direction === 'left' ? -1 : 1
+        const targetWeek = this.currentDisplayWeek + delta
+        
+        if (targetWeek >= 1) {
+          await this.switchDisplayWeek(targetWeek)
+          this.showToastMessage(`已切换到第${targetWeek}周`, 'success')
+        }
+      }, 800)
+    },
+
+    handleTableDragOver(event) {
+      this.isInLeftZone = false
+      this.isInRightZone = false
+      this.clearTimers()
+    },
+
+    handleDragEnd() {
+      this.resetDragState()
+    },
+    
+    handleDragStart(event, day, timeSlot) {
+      if (!this.isAdjustMode) return
+      
+      const course = this.getCourse(day, timeSlot)
+      if (!course) return
+      
+      this.isDragging = true
+      this.draggedDay = day
+      this.draggedTimeSlot = timeSlot
+      this.draggedCourse = course
+      this.originalWeek = this.currentDisplayWeek
+      
+      this.availableSlotsCache.clear()
+      
+      event.dataTransfer.setData('text/plain', JSON.stringify({
+        day,
+        timeSlot,
+        course: course,
+        week: this.originalWeek
+      }))
+      
+      event.dataTransfer.effectAllowed = 'move'
+      
+      // 设置拖拽图像为透明，使用自定义样式
+      const dragImage = new Image()
+      dragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+      event.dataTransfer.setDragImage(dragImage, 0, 0)
+      
+      this.queryAvailableSlots(this.currentDisplayWeek)
+    },
+    
+    handleDragOver(day, timeSlot) {
+      if (!this.isDragging || !this.isDroppable(day, timeSlot)) return
+      this.currentDragOver = `${day}-${timeSlot}`
+    },
+    
+    handleDragLeave() {
+      this.currentDragOver = null
+    },
+    
+    handleDrop(day, timeSlot) {
+      if (!this.isDragging || !this.isDroppable(day, timeSlot)) return
+      
+      this.targetDay = day
+      this.targetTimeSlot = timeSlot
+      this.targetWeek = this.currentDisplayWeek
+      
+      this.showConfirmDialog = true
+    },
+    
+    async confirmAdjustment() {
+      this.adjustmentLoading = true
+      
+      try {
+        const lessonMessage = `${this.draggedCourse.room},${this.draggedCourse.name},${this.draggedCourse.teacher || this.teacher}`
+        const whichLesson = parseInt(`${this.semester}${this.draggedDay}${this.draggedTimeSlot + 1}`)
+        
+        const response = await sendAdjustmentRequest({
+          lessonMessage,
+          whichLesson,
+          lessonAtWhichWeek: this.originalWeek,
+          toWhichWeek: this.targetWeek
+        })
+        
+        if (response.code === 1) {
+          const weekDiff = Math.abs(this.originalWeek - this.targetWeek)
+          const direction = this.targetWeek > this.originalWeek ? '向后' : '向前'
+          const successMessage = weekDiff > 0 
+            ? `${direction}跨${weekDiff}周调课成功！课程已从第${this.originalWeek}周调至第${this.targetWeek}周` 
+            : '调课成功！'
+          
+          this.showToastMessage(successMessage, 'success')
+          
+          this.coursesCache.clear()
+          await this.loadCourseTable(this.originalWeek)
+          
+          if (this.targetWeek !== this.originalWeek) {
+            await this.loadCourseTable(this.targetWeek)
+          }
+          
+          this.currentDisplayWeek = this.currentWeek
+          await this.loadCourseTable(this.currentWeek)
+          
+        } else {
+          throw new Error(response.message || '调课失败')
+        }
+      } catch (error) {
+        console.error('调课失败:', error)
+        this.showToastMessage(error.message || '调课失败，请稍后重试', 'error')
+      } finally {
+        this.adjustmentLoading = false
+        this.showConfirmDialog = false
+        this.resetDragState()
+      }
+    },
+
+    cancelAdjustment() {
+      this.showConfirmDialog = false
+      this.resetDragState()
+    },
+    
+    async queryAvailableSlots(targetWeek) {
+      if (!this.draggedCourse) return
+      
+      const cacheKey = `${this.originalWeek}-${targetWeek}-${this.draggedDay}-${this.draggedTimeSlot}`
+      
+      if (this.availableSlotsCache.has(cacheKey)) {
+        this.availableSlots = this.availableSlotsCache.get(cacheKey)
+        return
+      }
+      
+      try {
+        const lessonMessage = `${this.draggedCourse.room},${this.draggedCourse.name},${this.draggedCourse.teacher || this.teacher}`
+        const whichLesson = parseInt(`${this.semester}${this.draggedDay}${this.draggedTimeSlot + 1}`)
+        
+        const response = await queryAvailableSlots({
+          lessonMessage,
+          whichLesson,
+          lessonAtWhichWeek: this.originalWeek,
+          toWhichWeek: targetWeek
+        })
+        
+        this.availableSlots = response || []
+        this.availableSlotsCache.set(cacheKey, this.availableSlots)
+        
+      } catch (error) {
+        console.error('查询可用时间槽失败:', error)
+        this.availableSlots = []
+      }
+    },
+    
+    isDroppable(day, timeSlot) {
+      if (!this.isDragging) return false
+      
+      return this.availableSlots.some(slot => {
+        const slotDay = Math.floor(slot / 10)
+        const slotTime = (slot % 10) - 1
+        return slotDay === day && slotTime === timeSlot
+      })
+    },
+    
+    isAvailableSlot(day, timeSlot) {
+      if (!this.isDragging) return false
+      
+      return this.availableSlots.some(slot => {
+        const slotDay = Math.floor(slot / 10)
+        const slotTime = (slot % 10) - 1
+        return slotDay === day && slotTime === timeSlot
+      })
+    },
+    
+    isDragOver(day, timeSlot) {
+      return this.currentDragOver === `${day}-${timeSlot}`
+    }
+  }
+}
 </script>
 
 <style scoped>
 /* 全局样式 */
-.classroom-container {
-  padding: 24px;
-  background-color: #f5f7fa;
+.schedule-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1a1a1a;
+  background-color: #f9fafb;
   min-height: 100vh;
-  color: #303133;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
 }
 
-/* 仪表盘头部 */
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-title h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.subtitle {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: #909399;
-}
-
-.header-stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  min-width: 160px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
+/* 卡片通用样式 */
+.card {
+  background-color: white;
   border-radius: 12px;
-  background-color: #ecf5ff;
-  color: #409eff;
-  margin-right: 16px;
-  font-size: 24px;
-}
-
-.active-icon {
-  background-color: #fef0f0;
-  color: #f56c6c;
-}
-
-.free-icon {
-  background-color: #f0f9eb;
-  color: #67c23a;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-/* 控制面板 */
-.control-panel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.search-filter {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.search-input {
-  width: 300px;
-}
-
-.search-icon {
-  color: #909399;
-}
-
-.status-select, .capacity-select {
-  width: 160px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-/* 表格卡片 */
-.table-card {
-  margin-bottom: 24px;
-  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 16px;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #4f46e5;
+  margin-right: 0.75rem;
+}
+
+.card-title {
   font-weight: 600;
+  font-size: 1rem;
+  color: #111827;
 }
 
-.result-count {
-  font-size: 14px;
-  color: #909399;
-  font-weight: normal;
-}
-
-.classroom-table {
-  margin-top: 0;
-}
-
-.classroom-name {
+/* 头部区域 */
+.header-section {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.active {
-  background-color: #f56c6c;
-  box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
-}
-
-.inactive {
-  background-color: #67c23a;
-  box-shadow: 0 0 0 2px rgba(103, 194, 58, 0.2);
-}
-
-.text-active {
-  color: #f56c6c;
-  font-weight: 500;
-}
-
-.text-inactive {
-  color: #67c23a;
-  font-weight: 500;
-}
-
-.teacher-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.teacher-avatar {
-  background-color: #409eff;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;
-  font-size: 12px;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.action-column {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.table-pagination {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* 排课详情弹窗 */
-.schedule-info-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.classroom-detail h2 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.classroom-meta {
-  display: flex;
-  gap: 8px;
-}
-
-.date-navigation {
+.header-content {
   display: flex;
   flex-direction: column;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.title-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.75rem;
+}
+
+.page-subtitle {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* 查询表单 */
+.query-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem;
   align-items: flex-end;
-  gap: 12px;
 }
 
-.view-type-toggle {
-  margin-top: 8px;
-}
-
-/* 时间线样式 */
-.schedule-timeline {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-top: 24px;
-}
-
-.timeline-header {
+.form-group {
   display: flex;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
 }
 
-.time-label {
-  width: 120px;
-  padding: 12px;
+.form-label {
+  font-size: 0.875rem;
   font-weight: 500;
-  text-align: center;
-  border-right: 1px solid #ebeef5;
+  color: #4b5563;
 }
 
-.timeline-hours {
-  display: flex;
-  flex: 1;
+.form-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background-color: #f9fafb;
 }
 
-.hour-marker {
-  flex: 1;
-  text-align: center;
-  padding: 12px 0;
-  font-size: 13px;
-  color: #606266;
-  border-right: 1px dashed #ebeef5;
-}
-
-.hour-marker:last-child {
-  border-right: none;
-}
-
-.timeline-content {
+.form-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
   background-color: white;
 }
 
-.timeline-slots {
-  display: flex;
-  flex-direction: column;
-}
-
-.time-slot-row {
-  display: flex;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.time-slot-row:last-child {
-  border-bottom: none;
-}
-
-.time-slot-content {
-  flex: 1;
-  min-height: 80px;
-  padding: 12px;
-  transition: all 0.3s;
-}
-
-.slot-active {
-  background-color: #fef0f0;
-  border-left: 3px solid #f56c6c;
-}
-
-.slot-free {
-  background-color: #f0f9eb;
-  border-left: 3px solid #67c23a;
-}
-
-.slot-reserved {
-  background-color: #fdf6ec;
-  border-left: 3px solid #e6a23c;
-}
-
-.slot-details {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.slot-title {
+.primary-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.slot-status {
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.slot-course {
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
 }
 
-.slot-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  color: #606266;
+.primary-btn:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
 }
 
-.slot-free-label {
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+.primary-btn:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 周次导航 */
+.week-navigation {
+  padding: 1.5rem;
+}
+
+.week-controls {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: #67c23a;
+  gap: 1rem;
+}
+
+.week-nav-btn, .week-jump-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: white;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.week-nav-btn:hover, .week-jump-btn:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.week-nav-btn:disabled, .week-jump-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.week-jump-btn {
+  background-color: #f3f4f6;
+}
+
+.nav-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.week-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+}
+
+.week-text {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.week-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.drag-status {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.drag-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drag-label {
+  font-size: 0.875rem;
+  color: #6b7280;
   font-weight: 500;
 }
 
-/* 日期选择弹窗 */
-.date-picker-container {
-  padding: 0;
+.drag-value {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 600;
 }
 
-/* 响应式样式 */
-@media (max-width: 768px) {
-  .dashboard-header, .control-panel {
-    flex-direction: column;
-    align-items: stretch;
+.cross-week-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* 调课模式提示 */
+.adjust-mode-tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background-color: #f0f9ff;
+  border-bottom: 1px solid #e0f2fe;
+}
+
+.tip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #0369a1;
+}
+
+.tip-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 课程表 */
+.table-card {
+  position: relative;
+  overflow: visible;
+}
+
+.table-info {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.info-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 优化的跨周区域 - 移到表格外部 */
+.cross-week-zones {
+  position: relative;
+  height: 0;
+  z-index: 100;
+}
+
+.cross-week-zone {
+  position: absolute;
+  top: 20px;
+  width: 120px;
+  height: 400px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(79, 70, 229, 0.1) 100%);
+  border: 2px dashed rgba(79, 70, 229, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.cross-week-zone-left {
+  left: -140px;
+}
+
+.cross-week-zone-right {
+  right: -140px;
+}
+
+.cross-week-zone.active {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0.25) 100%);
+  border-color: rgba(79, 70, 229, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.2);
+}
+
+.cross-week-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4f46e5;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cross-week-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.cross-week-text {
+  font-size: 1rem;
+}
+
+.cross-week-week {
+  font-size: 0.875rem;
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+}
+
+.table-container {
+  position: relative;
+  overflow-x: auto;
+}
+
+.table-container.adjust-mode {
+  padding: 0 20px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* 课程表格 */
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header-row {
+  display: grid;
+  grid-template-columns: 100px repeat(7, 1fr);
+  background-color: #f9fafb;
+}
+
+.time-header, .day-header {
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  font-weight: 500;
+}
+
+.day-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.day-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 100px repeat(7, 1fr);
+}
+
+.time-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.time-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.time-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.course-cell {
+  position: relative;
+  min-height: 100px;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.course-cell.has-course {
+  background-color: #f0f9ff;
+}
+
+.course-cell.highlight-available {
+  background-color: #ecfdf5;
+  border: 2px dashed #10b981;
+  animation: pulse-available 2s infinite;
+}
+
+@keyframes pulse-available {
+  0%, 100% { 
+    background-color: #ecfdf5;
+    border-color: #10b981;
+  }
+  50% { 
+    background-color: #d1fae5;
+    border-color: #059669;
+  }
+}
+
+.course-cell.droppable {
+  background-color: #ecfdf5;
+  border: 2px solid #10b981;
+}
+
+.course-cell.drag-over {
+  background-color: #d1fae5;
+  border: 3px solid #059669;
+  transform: scale(1.05);
+  z-index: 2;
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+}
+
+/* 优化的课程内容样式 */
+.course-content {
+  height: 100%;
+  display: flex;
+  gap: 0.5rem;
+  cursor: default;
+  transition: all 0.2s ease;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border: 1px solid rgba(79, 70, 229, 0.1);
+  position: relative;
+}
+
+.course-content.draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.course-content.draggable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+  border-color: rgba(79, 70, 229, 0.3);
+}
+
+.course-content.draggable:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+/* 拖拽手柄
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.drag-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  background-color: #9ca3af;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.course-content:hover .dot {
+  background-color: #4f46e5;
+} */
+
+.course-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.course-room, .course-teacher {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.room-icon, .teacher-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.empty-cell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.available-slot {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #059669;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.available-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* 确认对话框 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+
+.dialog-container {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dialog-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.dialog-close-btn:hover {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.close-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.dialog-content {
+  padding: 1.5rem;
+}
+
+.dialog-text {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.course-details {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+}
+
+.detail-item {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item.cross-week-notice {
+  background-color: #fff7ed;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  border: 1px solid #ffedd5;
+}
+
+.detail-label {
+  width: 80px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.detail-value {
+  flex: 1;
+  color: #111827;
+  font-weight: 500;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.dialog-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dialog-btn-cancel {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.dialog-btn-cancel:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.dialog-btn-confirm {
+  background-color: #4f46e5;
+  border: 1px solid #4f46e5;
+  color: white;
+}
+
+.dialog-btn-confirm:hover {
+  background-color: #4338ca;
+  transform: translateY(-1px);
+}
+
+.dialog-btn-confirm:disabled {
+  background-color: #a5b4fc;
+  border-color: #a5b4fc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 提示消息 */
+.toast-notification {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.toast-notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  min-width: 300px;
+}
+
+.toast-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.toast-success {
+  color: #10b981;
+}
+
+.toast-error {
+  color: #ef4444;
+}
+
+.toast-text {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* 按钮样式 */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.action-btn.active {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.action-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .schedule-container {
+    padding: 1rem;
   }
   
-  .header-stats {
+  .header-section {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
   
-  .search-filter {
-    flex-direction: column;
-  }
-  
-  .search-input, .status-select, .capacity-select {
+  .header-actions {
     width: 100%;
   }
   
-  .action-buttons {
-    justify-content: space-between;
+  .action-btn {
+    width: 100%;
+    justify-content: center;
   }
   
-  .schedule-info-header {
+  .week-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .week-display {
+    order: -1;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .cross-week-zone-left {
+    left: -100px;
+  }
+  
+  .cross-week-zone-right {
+    right: -100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .query-form {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .date-navigation {
-    align-items: stretch;
+  .form-group {
+    min-width: auto;
+  }
+  
+  .week-controls {
+    gap: 0.5rem;
+  }
+  
+  .week-nav-btn, .week-jump-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .drag-status {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .table-header-row, .table-row {
+    grid-template-columns: 80px repeat(7, minmax(80px, 1fr));
+  }
+  
+  .time-cell, .day-header, .course-cell {
+    padding: 0.5rem;
+  }
+  
+  .course-cell {
+    min-height: 80px;
+  }
+  
+  .cross-week-zone {
+    width: 80px;
+    height: 300px;
+  }
+  
+  .cross-week-zone-left {
+    left: -90px;
+  }
+  
+  .cross-week-zone-right {
+    right: -90px;
   }
 }
 
-/* 动画效果 */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
+@media (max-width: 480px) {
+  .schedule-container {
+    padding: 0.5rem;
   }
-  50% {
-    transform: scale(1.05);
+  
+  .header-section {
+    padding: 1.25rem;
   }
-  100% {
-    transform: scale(1);
+  
+  .page-title {
+    font-size: 1.25rem;
   }
-}
-
-.active {
-  animation: pulse 2s infinite;
+  
+  .title-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .adjust-mode-tips {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .table-header-row, .table-row {
+    grid-template-columns: 60px repeat(7, minmax(60px, 1fr));
+  }
+  
+  .time-cell, .day-header, .course-cell {
+    padding: 0.25rem;
+  }
+  
+  .course-cell {
+    min-height: 70px;
+  }
+  
+  .course-name {
+    font-size: 0.75rem;
+  }
+  
+  .course-room, .course-teacher {
+    font-size: 0.625rem;
+  }
+  
+  .cross-week-zone {
+    width: 60px;
+    height: 250px;
+  }
+  
+  .cross-week-zone-left {
+    left: -70px;
+  }
+  
+  .cross-week-zone-right {
+    right: -70px;
+  }
 }
 </style>

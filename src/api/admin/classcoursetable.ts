@@ -21,7 +21,7 @@ interface ApiResponseData {
 interface GetCourseTableParams {
   semester: string;
   week: number;
-  teacher: string;
+  className: string;
 }
 
 // 定义前端需要的课程表数据格式
@@ -41,7 +41,7 @@ export const getTeacherCourseTable = async (
 ): Promise<CourseTableData> => {
   try {
     // 发送请求并直接返回响应数据
-    const response = await request.get<ApiResponseData>('/admin/courseTable/teacher', { params });
+    const response = await request.get<ApiResponseData>('/admin/courseTable/class', { params });
     
     return {
       courseTable: response.courseTable,

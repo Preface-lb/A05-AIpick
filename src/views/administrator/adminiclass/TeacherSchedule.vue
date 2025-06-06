@@ -527,6 +527,7 @@ export default {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 2rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  border-radius: 20px;
 }
 
 /* Header Section */
