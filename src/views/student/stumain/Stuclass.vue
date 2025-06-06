@@ -225,7 +225,7 @@
         <div class="modal-body">
           <div class="modal-info">
             <div class="info-item">
-              <div class="info-label">上课地点</div>
+              <div class="info-label">课程名称</div>
               <div class="info-value">{{ selectedCourse.course.location }}</div>
             </div>
             <div class="info-item">

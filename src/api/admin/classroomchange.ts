@@ -40,18 +40,7 @@ export function getAvailableClassrooms(params: GetAvailableClassroomsParams): Pr
   return request({
     url: '/admin/space/classroom',
     method: 'get',
-    params: {
-      lessonMessage: params.lessonMessage,
-      whichLesson: params.whichLesson,
-      lessonAtWhichWeek: params.lessonAtWhichWeek,
-      toWhichWeek: params.toWhichWeek
-    }
-  }).then((response: ApiResponse<Classroom[]>) => {
-    if (response.code === 1) {
-      return response.data || []
-    } else {
-      throw new Error(response.message || '获取可用教室失败')
-    }
+    params,
   })
 }
 
@@ -71,11 +60,6 @@ export function changeClassroom(params: ChangeClassroomParams): Promise<ApiRespo
       toWhichWeek: params.toWhichWeek,
       newClassroom: params.newClassroom
     }
-  }).then((response: ApiResponse) => {
-    if (response.code !== 1) {
-      throw new Error(response.message || '教室更换失败')
-    }
-    return response
   })
 }
 
@@ -91,12 +75,6 @@ export function getBatchAvailableClassrooms(
     url: '/admin/space/classroom/batch',
     method: 'post',
     data: { lessonList }
-  }).then((response: ApiResponse<Record<string, Classroom[]>>) => {
-    if (response.code === 1) {
-      return response.data || {}
-    } else {
-      throw new Error(response.message || '批量获取可用教室失败')
-    }
   })
 }
 
@@ -109,12 +87,6 @@ export function getClassroomDetails(classroomName: string): Promise<Classroom> {
   return request({
     url: `/admin/space/classroom/details/${encodeURIComponent(classroomName)}`,
     method: 'get'
-  }).then((response: ApiResponse<Classroom>) => {
-    if (response.code === 1 && response.data) {
-      return response.data
-    } else {
-      throw new Error(response.message || '获取教室详情失败')
-    }
   })
 }
 
@@ -128,19 +100,30 @@ export function checkClassroomAvailability(params: GetAvailableClassroomsParams)
     url: '/admin/space/classroom/check',
     method: 'get',
     params
-  }).then((response: ApiResponse<{ available: boolean }>) => {
-    if (response.code === 1) {
-      return response.data?.available ?? false
-    } else {
-      throw new Error(response.message || '检查教室可用性失败')
-    }
   })
 }
 
-// 导出类型
-export type {
-  Classroom,
-  GetAvailableClassroomsParams,
-  ChangeClassroomParams,
-  ApiResponse
+// 教室信息接口定义（匹配后端返回数据）
+export interface ClassroomInfo {
+  id: number;
+  size: number; // 容量
+  building: string; // 楼宇
+  name: string; // 教室名称
+  deviceStatus: number; // 设备状态（1=可用，0=不可用）
+  floor: number; // 楼层
+  classroomType: string; // 教室类型
+  airConditioner: number; // 是否有空调（1=有，0=无）
+  campus: string; // 校区
 }
+
+/**
+ * 获取教室详情API（使用统一的request工具）
+ * @param classroomId 教室ID
+ * @returns 教室详情
+ */
+export const getClassroomInfo = (classroomId: number): Promise<ClassroomInfo> => {
+  return request({
+    url: `/admin/classroomInfo/${classroomId}`, // 使用统一请求工具
+    method: 'get'
+  });
+};
