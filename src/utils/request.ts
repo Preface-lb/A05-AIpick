@@ -11,6 +11,7 @@ import { getToken } from './token'
 const request = axios.create({
   baseURL: 'http://47.96.106.71:8081',
   timeout: 18000,
+  
 })
 
 // 请求拦截器
@@ -33,7 +34,7 @@ request.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  },
+  }
 )
 
 // 响应拦截器

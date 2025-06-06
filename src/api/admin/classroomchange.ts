@@ -16,7 +16,6 @@ export interface GetAvailableClassroomsParams {
   lessonMessage: string  // 教室,学科,老师名 格式：HXGC2#201-化工分析实验室（一）,高等数学,宁亚
   whichLesson: number    // 20240253表示202402学期的周五第三节
   lessonAtWhichWeek: number  // 要被调的课在第几周
-  toWhichWeek: number    // 要调至第几周
 }
 
 // 更换教室的请求参数
@@ -51,15 +50,9 @@ export function getAvailableClassrooms(params: GetAvailableClassroomsParams): Pr
  */
 export function changeClassroom(params: ChangeClassroomParams): Promise<ApiResponse> {
   return request({
-    url: '/admin/space/classroom/change',
-    method: 'post',
-    data: {
-      lessonMessage: params.lessonMessage,
-      whichLesson: params.whichLesson,
-      lessonAtWhichWeek: params.lessonAtWhichWeek,
-      toWhichWeek: params.toWhichWeek,
-      newClassroom: params.newClassroom
-    }
+    url: '/admin/change/classroom',
+    method: 'put',
+    params
   })
 }
 

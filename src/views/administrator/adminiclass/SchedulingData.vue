@@ -964,33 +964,34 @@ export default {
     },
 
     async loadAvailableClassrooms() {
-      if (!this.selectedCourse) return
+  if (!this.selectedCourse) return
 
-      this.loadingClassrooms = true
+  this.loadingClassrooms = true
 
-      try {
-        const lessonMessage = `${this.selectedCourse.room},${this.selectedCourse.name},${this.selectedCourse.teacher || this.teacher}`
-        const whichLesson = parseInt(
-          `${this.semester}${this.selectedCourseDay}${this.selectedCourseTimeSlot + 1}`,
-        )
+  try {
+    // 直接使用原始字符串，不要手动编码
+    const lessonMessage = `${this.selectedCourse.room},${this.selectedCourse.name},${this.selectedCourse.teacher || this.teacher}`
+    const whichLesson = parseInt(
+      `${this.semester}${this.selectedCourseDay}${this.selectedCourseTimeSlot + 1}`,
+    )
 
-        const response = await getAvailableClassrooms({
-          lessonMessage,
-          whichLesson,
-          lessonAtWhichWeek: this.currentDisplayWeek,
-          toWhichWeek: this.currentDisplayWeek,
-        })
+    const response = await getAvailableClassrooms({
+      lessonMessage,
+      whichLesson,
+      lessonAtWhichWeek: this.currentDisplayWeek,
+      // toWhichWeek: this.currentDisplayWeek,
+    })
 
-        this.availableClassrooms = response || []
-        console.log('可用教室:', this.availableClassrooms)
-      } catch (error) {
-        console.error('获取可用教室失败:', error)
-        this.showToastMessage('获取可用教室失败', 'error')
-        this.availableClassrooms = []
-      } finally {
-        this.loadingClassrooms = false
-      }
-    },
+    this.availableClassrooms = response || []
+    console.log('可用教室:', this.availableClassrooms)
+  } catch (error) {
+    console.error('获取可用教室失败:', error)
+    this.showToastMessage('获取可用教室失败', 'error')
+    this.availableClassrooms = []
+  } finally {
+    this.loadingClassrooms = false
+  }
+},
 
     // Handle classroom selection change
     async handleClassroomSelectionChange() {
@@ -1024,7 +1025,7 @@ export default {
           lessonMessage,
           whichLesson,
           lessonAtWhichWeek: this.currentDisplayWeek,
-          toWhichWeek: this.currentDisplayWeek,
+          // toWhichWeek: this.currentDisplayWeek,
           newClassroom: this.newClassroom,
         })
 
