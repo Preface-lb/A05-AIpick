@@ -2,18 +2,19 @@ import request from "@/utils/request"
 
 // 查询可用调课时间槽的参数接口
 export interface QueryAvailableSlotsParams {
-  lessonMessage?: string // 教室,学科,老师名
-  whichLesson?: number // 课程标识，如20240253表示202402学期的周五第三节
+  lessonMessage?: string // 教室,学科,老师名 示例: JXL3#324,普通话正音1,衡怡欣
+  whichLesson?: number // 课程标识，如20240223表示202402学期的周二第三节
   lessonAtWhichWeek?: number // 要被调的课在第几周
   toWhichWeek: number // 要调至第几周
 }
 
 // 执行调课操作的参数接口
 export interface AdjustmentRequestParams {
-  lessonMessage: string // 教室,学科,老师名
-  whichLesson: number // 课程标识
-  lessonAtWhichWeek: number // 要被调的课在第几周
-  toWhichWeek: number // 要调至第几周
+  lessonMessage: string // 教室,学科,老师名 示例: JXL3#324,普通话正音1,衡怡欣
+  whichLesson: number // 课程标识 示例: 20240223
+  lessonAtWhichWeek: number // 要被调的课在第几周 示例: 15
+  toWhichWeek: number // 要调至第几周 示例: 15
+  timePiece: number // 时间片段 示例: 61 (周六第一节)
 }
 
 // API 响应接口
@@ -35,8 +36,8 @@ export function queryAvailableSlots(params: QueryAvailableSlotsParams): Promise<
 // 执行调课操作
 export function sendAdjustmentRequest(params: AdjustmentRequestParams): Promise<ApiResponse> {
   return request({
-    url: "/admin/teacoursetable/adjust",
-    method: "post",
-    data: params,
+    url: "/admin/change/time",
+    method: "put",
+    params,
   })
 }

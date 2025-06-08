@@ -37,7 +37,7 @@
         <div class="form-group">
           <label class="form-label">周次</label>
           <input
-            v-model="week"
+            v-model.number="week"
             placeholder="周次"
             class="form-input"
             type="number"
@@ -90,10 +90,11 @@
         </button>
       </div>
 
+      <!-- 显示拖拽状态信息 -->
       <div v-if="isAdjustMode && isDragging" class="drag-status">
         <div class="drag-info">
           <span class="drag-label">拖拽课程:</span>
-          <span class="drag-value">{{ draggedCourse?.name }}</span>
+          <span class="drag-value">{{ draggedCourse ? draggedCourse.name : '未知课程' }}</span>
         </div>
         <div class="drag-info">
           <span class="drag-label">原始周次:</span>
@@ -126,26 +127,24 @@
         </div>
       </div>
 
-      
-    <div v-if="isAdjustMode" class="adjust-mode-tips">
-      <div class="tip-item">
-        <el-icon><Pointer /></el-icon>
-        <span>拖拽课程卡片到可用时间槽</span>
+      <div v-if="isAdjustMode" class="adjust-mode-tips">
+        <div class="tip-item">
+          <MousePointer class="tip-icon" />
+          <span>拖拽课程卡片到可用时间槽</span>
+        </div>
+        <div class="tip-item">
+          <ChevronLeft class="tip-icon" />
+          <ChevronRight class="tip-icon" />
+          <span>拖到左右边界可跨周调课</span>
+        </div>
       </div>
-      <div class="tip-item">
-        <el-icon><ArrowLeft /></el-icon>
-        <el-icon><ArrowRight /></el-icon>
-        <span>拖到左右边界可跨周调课</span>
-      </div>
-    </div>
 
-    <div v-if="!isAdjustMode" class="view-mode-tips">
-      <div class="tip-item">
-        <el-icon><View /></el-icon>
-        <span>点击课程卡片查看详情并调整教室</span>
+      <div v-if="!isAdjustMode" class="view-mode-tips">
+        <div class="tip-item">
+          <Eye class="tip-icon" />
+          <span>点击课程卡片查看详情并调整教室</span>
+        </div>
       </div>
-    </div>
-  
 
       <!-- 跨周提示区域 -->
       <div v-if="isDragging" class="cross-week-zones">
@@ -251,10 +250,10 @@
                   </div>
                   <div class="course-info">
                     <div class="course-name">
-                      {{ getCourse(dayIndex + 1, timeIndex).name }}
+                      {{ getCourse(dayIndex + 1, timeIndex).name || '未知课程' }}
                     </div>
                     <div class="course-room">
-                      {{ getCourse(dayIndex + 1, timeIndex).room }}
+                      {{ getCourse(dayIndex + 1, timeIndex).room || '未知教室' }}
                     </div>
                     <div
                       class="course-teacher"
@@ -290,7 +289,7 @@
             课程详情与教室管理
           </h3>
           <button @click="closeCourseInfoDialog" class="dialog-close-btn">
-            ×
+            <X />
           </button>
         </div>
         <div class="dialog-content">
@@ -298,25 +297,26 @@
             <!-- 基本信息 -->
             <div class="info-section">
               <h4 class="section-title">
+                <Info class="section-icon" />
                 基本信息
               </h4>
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">课程名称:</span>
-                  <span class="info-value">{{ selectedCourse?.name }}</span>
+                  <span class="info-value">{{ selectedCourse ? selectedCourse.name : '未知课程' }}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">授课教师:</span>
                   <span class="info-value">{{
-                    selectedCourse?.teacher || teacher
+                    selectedCourse && selectedCourse.teacher ? selectedCourse.teacher : teacher
                   }}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">上课时间:</span>
                   <span class="info-value">
                     第{{ currentDisplayWeek }}周
-                    {{ days[selectedCourseDay - 1] }}
-                    {{ timeSlots[selectedCourseTimeSlot] }}
+                    {{ selectedCourseDay && days[selectedCourseDay - 1] ? days[selectedCourseDay - 1] : '未知' }}
+                    {{ selectedCourseTimeSlot !== null && timeSlots[selectedCourseTimeSlot] ? timeSlots[selectedCourseTimeSlot] : '未知时间' }}
                   </span>
                 </div>
               </div>
@@ -325,6 +325,7 @@
             <!-- 教室更换 -->
             <div class="info-section">
               <h4 class="section-title">
+                <Building class="section-icon" />
                 教室更换
               </h4>
               
@@ -332,7 +333,7 @@
                 <div class="current-classroom-display">
                   <span class="current-label">当前教室:</span>
                   <div class="current-room-badge">
-                    {{ selectedCourse?.room }}
+                    {{ selectedCourse ? selectedCourse.room : '未知教室' }}
                   </div>
                 </div>
                 
@@ -363,8 +364,9 @@
             </div>
 
             <!-- 新选择教室的详细信息 -->
-            <div v-if="newClassroom && newClassroom !== selectedCourse?.room" class="info-section">
+            <div v-if="newClassroom && newClassroom !== (selectedCourse ? selectedCourse.room : '')" class="info-section">
               <h4 class="section-title">
+                <Eye class="section-icon" />
                 新教室详情预览
               </h4>
               
@@ -431,12 +433,14 @@
                 </div>
 
                 <!-- 对比提示 -->
-                <div class="comparison-tips">
-                  <div class="comparison-item" v-if="currentClassroomInfo && newClassroomInfo.size !== currentClassroomInfo.size">
+                <div class="comparison-tips" v-if="currentClassroomInfo">
+                  <div class="comparison-item" v-if="newClassroomInfo.size !== currentClassroomInfo.size">
+                    <TrendingUp v-if="newClassroomInfo.size > currentClassroomInfo.size" class="comparison-icon" />
+                    <TrendingDown v-else class="comparison-icon" />
                     <span>容量变化: {{ currentClassroomInfo.size }} → {{ newClassroomInfo.size }} 人</span>
                   </div>
                   
-                  <div class="comparison-item" v-if="currentClassroomInfo && newClassroomInfo.airConditioner !== currentClassroomInfo.airConditioner">
+                  <div class="comparison-item" v-if="newClassroomInfo.airConditioner !== currentClassroomInfo.airConditioner">
                     <span>空调设施: {{ currentClassroomInfo.airConditioner === 1 ? '有' : '无' }} → {{ newClassroomInfo.airConditioner === 1 ? '有' : '无' }}</span>
                   </div>
                 </div>
@@ -444,6 +448,7 @@
 
               <!-- 获取新教室信息失败 -->
               <div v-else class="error-message">
+                <AlertTriangle class="error-icon" />
                 <span>无法获取新教室详细信息</span>
               </div>
             </div>
@@ -463,7 +468,7 @@
             :disabled="
               !newClassroom ||
               classroomChangeLoading ||
-              newClassroom === selectedCourse?.room
+              newClassroom === (selectedCourse ? selectedCourse.room : '')
             "
           >
             {{ classroomChangeLoading ? '更换中...' : '确认更换教室' }}
@@ -478,36 +483,34 @@
         <div class="dialog-header">
           <h3 class="dialog-title">确认调课</h3>
           <button @click="cancelAdjustment" class="dialog-close-btn">
-            ×
+            <X />
           </button>
         </div>
         <div class="dialog-content">
           <p class="dialog-text">您确定要将以下课程进行调整吗？</p>
           <div class="course-details">
-            <div class="detail-item">
+            <!-- <div class="detail-item">
               <span class="detail-label">课程:</span>
-              <span class="detail-value">{{
-                draggedCourse.name || '未知课程'
-              }}</span>
+              <span class="detail-value">{{ draggedCourse ? draggedCourse.name : '未知课程' }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">教室:</span>
-              <span class="detail-value">{{
-                draggedCourse.room || '未知教室'
-              }}</span>
-            </div>
+              <span class="detail-value">{{ draggedCourse ? draggedCourse.room : '未知教室' }}</span>
+            </div> -->
             <div class="detail-item">
               <span class="detail-label">原时间:</span>
               <span class="detail-value"
-                >第{{ originalWeek }}周 {{ days[draggedDay - 1] }}
-                {{ timeSlots[draggedTimeSlot] }}</span
+                >第{{ originalWeek }}周 
+                <!-- {{ draggedDay && days[draggedDay - 1] ? days[draggedDay - 1] : '未知' }} -->
+                <!-- {{ draggedTimeSlot !== null && timeSlots[draggedTimeSlot] ? timeSlots[draggedTimeSlot] : '未知时间' }} -->
+                </span
               >
             </div>
             <div class="detail-item">
               <span class="detail-label">调整至:</span>
               <span class="detail-value"
-                >第{{ targetWeek }}周 {{ days[targetDay - 1] }}
-                {{ timeSlots[targetTimeSlot] }}</span
+                >第{{ targetWeek }}周 {{ targetDay && days[targetDay - 1] ? days[targetDay - 1] : '未知' }}
+                {{ targetTimeSlot !== null && timeSlots[targetTimeSlot] ? timeSlots[targetTimeSlot] : '未知时间' }}</span
               >
             </div>
             <div
@@ -544,10 +547,12 @@
     <div
       v-if="toastMessage"
       class="toast-notification"
-      :class="{ show: showToast }"
+      :class="{ show: showToast, [`toast-${toastType}`]: true }"
     >
       <div class="toast-content">
-        <el-icon><Comment /></el-icon>
+        <CheckCircle v-if="toastType === 'success'" class="toast-icon" />
+        <AlertCircle v-else-if="toastType === 'error'" class="toast-icon" />
+        <Info v-else class="toast-icon" />
         <span class="toast-text">{{ toastMessage }}</span>
       </div>
     </div>
@@ -598,7 +603,7 @@ import {
   changeClassroom,
   getClassroomInfo,
 } from '@/api/admin/classroomchange'
-import { CommonPicker } from 'element-plus'
+import { courseDragManager } from '@/utils/course-drag-manager.js'
 
 export default {
   name: 'TeacherScheduleAdjustment',
@@ -637,6 +642,7 @@ export default {
   },
   data() {
     return {
+      // 基础数据
       semester: '202402',
       week: 1,
       teacher: '',
@@ -702,18 +708,38 @@ export default {
       newClassroomInfo: null,
       loadingCurrentClassroomInfo: false,
       loadingNewClassroomInfo: false,
-      classroomInfoCache: new Map(), // 缓存教室信息
+      classroomInfoCache: new Map(),
+
+      // 拖拽管理器
+      courseDragManager: courseDragManager,
     }
   },
   mounted() {
     this.confirmInfo()
     document.addEventListener('dragend', this.handleDragEnd)
+    
+    // 检查是否有未完成的拖拽操作
+    this.checkPendingDragOperation()
   },
   beforeUnmount() {
     document.removeEventListener('dragend', this.handleDragEnd)
     this.clearTimers()
   },
   methods: {
+    // 检查待处理的拖拽操作
+    checkPendingDragOperation() {
+      try {
+        if (this.courseDragManager && this.courseDragManager.hasValidDragData()) {
+          const summary = this.courseDragManager.getAdjustmentSummary();
+          console.log('发现未完成的拖拽操作:', summary);
+          
+          this.showToastMessage('检测到未完成的调课操作', 'info');
+        }
+      } catch (error) {
+        console.warn('检查拖拽操作失败:', error);
+      }
+    },
+
     clearTimers() {
       if (this.crossWeekTimer) {
         clearTimeout(this.crossWeekTimer)
@@ -738,6 +764,11 @@ export default {
     },
 
     async loadCourseTable(week) {
+      if (!week || week < 1) {
+        console.warn('无效的周次:', week);
+        return;
+      }
+
       const cacheKey = `${this.semester}-${week}-${this.teacher}`
       if (this.coursesCache.has(cacheKey)) {
         this.courses = this.coursesCache.get(cacheKey)
@@ -754,10 +785,15 @@ export default {
           teacher: this.teacher,
         })
 
-        const courses = this.transformCourseData(response.courseTable)
-        this.courses = courses
-        this.coursesCache.set(cacheKey, courses)
-        this.showToastMessage(`第${week}周课程表加载成功`, 'success')
+        if (response && response.courseTable) {
+          const courses = this.transformCourseData(response.courseTable)
+          this.courses = courses
+          this.coursesCache.set(cacheKey, courses)
+          this.showToastMessage(`第${week}周课程表加载成功`, 'success')
+        } else {
+          this.courses = []
+          this.showToastMessage('未找到课程数据', 'info')
+        }
       } catch (error) {
         console.error('请求失败:', error)
         this.showToastMessage(error.message || '请求失败，请稍后重试', 'error')
@@ -768,6 +804,11 @@ export default {
     },
 
     transformCourseData(courseTable) {
+      if (!Array.isArray(courseTable)) {
+        console.warn('课程表数据格式错误:', courseTable);
+        return [];
+      }
+
       const courses = []
       const timeSlotMap = {
         one: 0,
@@ -780,17 +821,25 @@ export default {
       }
 
       courseTable.forEach((dayData) => {
+        if (!dayData || typeof dayData !== 'object') return;
+
         for (const [slotKey, slotIndex] of Object.entries(timeSlotMap)) {
           const courseInfo = dayData[slotKey]
-          if (courseInfo) {
-            const [room, name, teacher] = courseInfo.split(',')
-            courses.push({
-              day: dayData.day,
-              timeSlot: slotIndex,
-              name,
-              room,
-              teacher,
-            })
+          if (courseInfo && typeof courseInfo === 'string') {
+            const parts = courseInfo.split(',')
+            const room = parts[0] || ''
+            const name = parts[1] || ''
+            const teacher = parts[2] || ''
+            
+            if (name) { // 只有课程名称不为空才添加
+              courses.push({
+                day: dayData.day,
+                timeSlot: slotIndex,
+                name,
+                room,
+                teacher,
+              })
+            }
           }
         }
       })
@@ -828,26 +877,36 @@ export default {
       this.currentDisplayWeek = targetWeek
       await this.loadCourseTable(targetWeek)
 
-      if (this.isDragging) {
+      if (this.isDragging && this.draggedCourse) {
         await this.queryAvailableSlots(targetWeek)
       }
     },
 
     getDayDate(dayIndex, week = null) {
-      const targetWeek = week || this.currentDisplayWeek
-      const date = new Date(this.startDate)
-      date.setDate(date.getDate() + (targetWeek - 1) * 7 + dayIndex)
-      return `${date.getMonth() + 1}/${date.getDate()}`
+      try {
+        const targetWeek = week || this.currentDisplayWeek
+        const date = new Date(this.startDate)
+        date.setDate(date.getDate() + (targetWeek - 1) * 7 + dayIndex)
+        return `${date.getMonth() + 1}/${date.getDate()}`
+      } catch (error) {
+        console.warn('获取日期失败:', error);
+        return '--/--';
+      }
     },
 
     getWeekDateRange(week = null) {
-      const targetWeek = week || this.currentDisplayWeek
-      const startDate = new Date(this.startDate)
-      startDate.setDate(startDate.getDate() + (targetWeek - 1) * 7)
-      const endDate = new Date(startDate)
-      endDate.setDate(endDate.getDate() + 6)
+      try {
+        const targetWeek = week || this.currentDisplayWeek
+        const startDate = new Date(this.startDate)
+        startDate.setDate(startDate.getDate() + (targetWeek - 1) * 7)
+        const endDate = new Date(startDate)
+        endDate.setDate(endDate.getDate() + 6)
 
-      return `${startDate.getMonth() + 1}月${startDate.getDate()}日 - ${endDate.getMonth() + 1}月${endDate.getDate()}日`
+        return `${startDate.getMonth() + 1}月${startDate.getDate()}日 - ${endDate.getMonth() + 1}月${endDate.getDate()}日`
+      } catch (error) {
+        console.warn('获取周日期范围失败:', error);
+        return '日期范围获取失败';
+      }
     },
 
     hasCourse(day, timeSlotIndex) {
@@ -902,7 +961,7 @@ export default {
       }
     },
 
-    // Enhanced course click handler with real backend data
+        // Enhanced course click handler with real backend data
     async handleCourseClick(day, timeSlot) {
       const course = this.getCourse(day, timeSlot)
       if (!course || !course.name) return
@@ -925,73 +984,113 @@ export default {
     },
 
 
-    // Load new classroom information when selection changes
-    async loadNewClassroomInfo(classroomName) {
-      if (!classroomName || !this.availableClassrooms.length) return
+    /**
+   * 加载当前课程教室详情
+   */
+  async loadCurrentClassroomInfo(classroomName) {
+    if (!classroomName) return
 
-      // 检查缓存
-      if (this.classroomInfoCache.has(classroomName)) {
-        this.newClassroomInfo = this.classroomInfoCache.get(classroomName)
+    // 如果已缓存，直接取缓存
+    if (this.classroomInfoCache.has(classroomName)) {
+      this.currentClassroomInfo = this.classroomInfoCache.get(classroomName)
+      return
+    }
+
+    this.loadingCurrentClassroomInfo = true
+
+    try {
+      const classroom = this.availableClassrooms.find(item => item.name === classroomName)
+
+      // 如果从可用教室中未找到，跳过 ID 查询
+      if (!classroom) {
+        console.warn(`未在可用教室列表中找到 ${classroomName}，尝试使用教室名称直接查询`)
         return
       }
 
-      this.loadingNewClassroomInfo = true
+      const response = await getClassroomInfo(classroom.id)
 
-      try {
-        const classroom = this.availableClassrooms.find(item => item.name === classroomName)
-        
-        if (!classroom) {
-          console.warn(`未找到教室 ${classroomName} 的信息`)
-          return
-        }
-
-        const response = await getClassroomInfo(classroom.id)
-        
-        if (response) {
-          this.newClassroomInfo = response
-          // 缓存教室信息
-          this.classroomInfoCache.set(classroomName, response)
-        } else {
-          throw new Error('获取教室详情失败')
-        }
-      } catch (error) {
-        console.error('获取新教室详情失败:', error)
-        this.showToastMessage('获取新教室详情失败', 'error')
-        this.newClassroomInfo = null
-      } finally {
-        this.loadingNewClassroomInfo = false
+      if (response) {
+        this.currentClassroomInfo = response
+        this.classroomInfoCache.set(classroomName, response) // 缓存数据
+      } else {
+        throw new Error('获取教室详情失败')
       }
-    },
+    } catch (error) {
+      console.error('获取当前教室详情失败:', error)
+      this.showToastMessage('获取当前教室详情失败', 'error')
+      this.currentClassroomInfo = null
+    } finally {
+      this.loadingCurrentClassroomInfo = false
+    }
+  },
+
+  /**
+   * 加载用户选择的新教室详情
+   */
+  async loadNewClassroomInfo(classroomName) {
+    if (!classroomName || !this.availableClassrooms.length) return
+
+    if (this.classroomInfoCache.has(classroomName)) {
+      this.newClassroomInfo = this.classroomInfoCache.get(classroomName)
+      return
+    }
+
+    this.loadingNewClassroomInfo = true
+
+    try {
+      const classroom = this.availableClassrooms.find(item => item.name === classroomName)
+
+      if (!classroom) {
+        console.warn(`未找到教室 ${classroomName} 的信息`)
+        return
+      }
+
+      const response = await getClassroomInfo(classroom.id)
+
+      if (response) {
+        this.newClassroomInfo = response
+        this.classroomInfoCache.set(classroomName, response)
+      } else {
+        throw new Error('获取新教室详情失败')
+      }
+    } catch (error) {
+      console.error('获取新教室详情失败:', error)
+      this.showToastMessage('获取新教室详情失败', 'error')
+      this.newClassroomInfo = null
+    } finally {
+      this.loadingNewClassroomInfo = false
+    }
+  },
+
 
     async loadAvailableClassrooms() {
-  if (!this.selectedCourse) return
+      if (!this.selectedCourse) return
 
-  this.loadingClassrooms = true
+      this.loadingClassrooms = true
 
-  try {
-    // 直接使用原始字符串，不要手动编码
-    const lessonMessage = `${this.selectedCourse.room},${this.selectedCourse.name},${this.selectedCourse.teacher || this.teacher}`
-    const whichLesson = parseInt(
-      `${this.semester}${this.selectedCourseDay}${this.selectedCourseTimeSlot + 1}`,
-    )
+      try {
+        const lessonMessage = `${this.selectedCourse.room},${this.selectedCourse.name},${this.selectedCourse.teacher || this.teacher}`
+        const whichLesson = parseInt(
+          `${this.semester}${this.selectedCourseDay}${this.selectedCourseTimeSlot + 1}`,
+        )
 
-    const response = await getAvailableClassrooms({
-      lessonMessage,
-      whichLesson,
-      lessonAtWhichWeek: this.currentDisplayWeek,
-      // toWhichWeek: this.currentDisplayWeek,
-    })
+        const response = await getAvailableClassrooms({
+          lessonMessage,
+          whichLesson,
+          lessonAtWhichWeek: this.currentDisplayWeek,
+          toWhichWeek: this.currentDisplayWeek,
+        })
 
-    this.availableClassrooms = response || []
-    console.log('可用教室:', this.availableClassrooms)
-  } catch (error) {
-    console.error('获取可用教室失败:', error)
-    this.showToastMessage('获取可用教室失败', 'error')
-    this.availableClassrooms = []
-  } finally {
-    this.loadingClassrooms = false
-  }
-},
+        this.availableClassrooms = response || []
+        console.log('可用教室:', this.availableClassrooms)
+      } catch (error) {
+        console.error('获取可用教室失败:', error)
+        this.showToastMessage('获取可用教室失败', 'error')
+        this.availableClassrooms = []
+      } finally {
+        this.loadingClassrooms = false
+      }
+    },
 
     // Handle classroom selection change
     async handleClassroomSelectionChange() {
@@ -1025,11 +1124,11 @@ export default {
           lessonMessage,
           whichLesson,
           lessonAtWhichWeek: this.currentDisplayWeek,
-          // toWhichWeek: this.currentDisplayWeek,
+          toWhichWeek: this.currentDisplayWeek,
           newClassroom: this.newClassroom,
         })
 
-        if (response.code === 1) {
+        if (!response) {
           this.showToastMessage(
             `教室已成功更换为 ${this.newClassroom}`,
             'success',
@@ -1155,16 +1254,37 @@ export default {
       this.resetDragState()
     },
 
+    // 更新后的拖拽开始处理器
     handleDragStart(event, day, timeSlot) {
       if (!this.isAdjustMode) return
 
       const course = this.getCourse(day, timeSlot)
-      if (!course) return
+      if (!course || !course.name) return
 
+      // 创建课程信息对象
+      const courseInfo = { 
+        name: course.name || '未知课程',
+        room: course.room || '未知教室',
+        teacher: course.teacher || this.teacher
+      };
+
+      // 使用拖拽管理器存储信息
+      try {
+        this.courseDragManager.startDrag({
+          course: courseInfo,
+          day: day,
+          timeSlot: timeSlot,
+          week: this.currentDisplayWeek
+        });
+      } catch (error) {
+        console.error('拖拽管理器启动失败:', error);
+      }
+
+      // 保持原有的组件状态
       this.isDragging = true
       this.draggedDay = day
       this.draggedTimeSlot = timeSlot
-      this.draggedCourse = course
+      this.draggedCourse = courseInfo
       this.originalWeek = this.currentDisplayWeek
 
       this.availableSlotsCache.clear()
@@ -1174,7 +1294,7 @@ export default {
         JSON.stringify({
           day,
           timeSlot,
-          course: course,
+          course: courseInfo,
           week: this.originalWeek,
         }),
       )
@@ -1198,54 +1318,129 @@ export default {
       this.currentDragOver = null
     },
 
+    // 更新后的拖拽放置处理器
     handleDrop(day, timeSlot) {
       if (!this.isDragging || !this.isDroppable(day, timeSlot)) return
+
+      // 更新拖拽管理器中的目标信息
+      try {
+        this.courseDragManager.updateTarget(day, timeSlot, this.currentDisplayWeek);
+      } catch (error) {
+        console.error('更新拖拽目标失败:', error);
+      }
 
       this.targetDay = day
       this.targetTimeSlot = timeSlot
       this.targetWeek = this.currentDisplayWeek
 
-      this.showConfirmDialog = true
+      this.$nextTick(() => {
+        this.showConfirmDialog = true
+      })
     },
 
+    // 计算时间片段参数 (timePiece)
+    calculateTimePiece(day, timeSlot) {
+      // day: 1-7 (周一到周日)
+      // timeSlot: 0-4 (第1-5节课)
+      return day * 10 + (timeSlot + 1)
+    },
+
+    // 更新后的确认调课方法
     async confirmAdjustment() {
+      // 优先从拖拽管理器获取课程信息
+      let courseInfo = this.draggedCourse;
+      
+      if (!courseInfo) {
+        try {
+          courseInfo = this.courseDragManager.getDraggedCourse();
+        } catch (error) {
+          console.error('从拖拽管理器获取课程信息失败:', error);
+        }
+      }
+      
+      if (!courseInfo) {
+        this.showToastMessage('课程信息丢失，请重新拖拽', 'error')
+        this.cancelAdjustment()
+        return
+      }
+
+      // 从拖拽管理器获取完整的调课信息
+      let dragData = null;
+      try {
+        dragData = this.courseDragManager.getDragData();
+      } catch (error) {
+        console.error('从拖拽管理器获取数据失败:', error);
+      }
+
+      if (!dragData) {
+        this.showToastMessage('调课信息不完整，请重新操作', 'error')
+        this.cancelAdjustment()
+        return
+      }
+
       this.adjustmentLoading = true
 
       try {
-        const lessonMessage = `${this.draggedCourse.room},${this.draggedCourse.name},${this.draggedCourse.teacher || this.teacher}`
+        const lessonMessage = `${courseInfo.room},${courseInfo.name},${courseInfo.teacher}`
+        
+        // 使用拖拽管理器中的原始信息
         const whichLesson = parseInt(
-          `${this.semester}${this.draggedDay}${this.draggedTimeSlot + 1}`,
+          `${this.semester}${dragData.originalDay}${dragData.originalTimeSlot + 1}`,
         )
+        
+        // 计算目标时间片段
+        const timePiece = this.calculateTimePiece(
+          dragData.targetDay || this.targetDay, 
+          dragData.targetTimeSlot || this.targetTimeSlot
+        );
+
+        console.log('调课参数:', {
+          lessonMessage,
+          whichLesson,
+          lessonAtWhichWeek: dragData.originalWeek,
+          toWhichWeek: dragData.targetWeek || this.targetWeek,
+          timePiece
+        })
 
         const response = await sendAdjustmentRequest({
           lessonMessage,
           whichLesson,
-          lessonAtWhichWeek: this.originalWeek,
-          toWhichWeek: this.targetWeek,
+          lessonAtWhichWeek: dragData.originalWeek,
+          toWhichWeek: dragData.targetWeek || this.targetWeek,
+          timePiece: timePiece
         })
 
-        if (response.code === 1) {
-          const weekDiff = Math.abs(this.originalWeek - this.targetWeek)
-          const direction =
-            this.targetWeek > this.originalWeek ? '向后' : '向前'
-          const successMessage =
-            weekDiff > 0
-              ? `${direction}跨${weekDiff}周调课成功！课程已从第${this.originalWeek}周调至第${this.targetWeek}周`
-              : '调课成功！'
+        if (!response) {
+          const originalWeek = dragData.originalWeek;
+          const targetWeek = dragData.targetWeek || this.targetWeek;
+          const weekDiff = Math.abs(originalWeek - targetWeek);
+          const direction = targetWeek > originalWeek ? '向后' : '向前';
+          
+          const successMessage = weekDiff > 0
+            ? `${direction}跨${weekDiff}周调课成功！课程已从第${originalWeek}周调至第${targetWeek}周`
+            : '调课成功！';
 
           this.showToastMessage(successMessage, 'success')
 
+          // 清理缓存并重新加载
           this.coursesCache.clear()
-          await this.loadCourseTable(this.originalWeek)
+          await this.loadCourseTable(originalWeek)
 
-          if (this.targetWeek !== this.originalWeek) {
-            await this.loadCourseTable(this.targetWeek)
+          if (targetWeek !== originalWeek) {
+            await this.loadCourseTable(targetWeek)
           }
 
           this.currentDisplayWeek = this.currentWeek
           await this.loadCourseTable(this.currentWeek)
+          
+          // 清除拖拽管理器中的数据
+          try {
+            this.courseDragManager.clear();
+          } catch (error) {
+            console.error('清除拖拽管理器失败:', error);
+          }
         } else {
-          throw new Error(response.message || '调课失败')
+          throw new Error(response && response.message ? response.message : '调课失败')
         }
       } catch (error) {
         console.error('调课失败:', error)
@@ -1257,8 +1452,14 @@ export default {
       }
     },
 
+    // 更新后的取消调课方法
     cancelAdjustment() {
       this.showConfirmDialog = false
+      try {
+        this.courseDragManager.clear(); // 清除拖拽管理器数据
+      } catch (error) {
+        console.error('清除拖拽管理器失败:', error);
+      }
       this.resetDragState()
     },
 
@@ -1273,10 +1474,17 @@ export default {
       }
 
       try {
-        const lessonMessage = `${this.draggedCourse.room},${this.draggedCourse.name},${this.draggedCourse.teacher || this.teacher}`
+        const lessonMessage = `${this.draggedCourse.room},${this.draggedCourse.name},${this.draggedCourse.teacher}`
         const whichLesson = parseInt(
           `${this.semester}${this.draggedDay}${this.draggedTimeSlot + 1}`,
         )
+
+        console.log('查询可用时间槽参数:', {
+          lessonMessage,
+          whichLesson,
+          lessonAtWhichWeek: this.originalWeek,
+          toWhichWeek: targetWeek,
+        })
 
         const response = await queryAvailableSlots({
           lessonMessage,

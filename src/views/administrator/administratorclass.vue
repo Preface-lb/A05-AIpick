@@ -59,7 +59,7 @@
               <!-- 排课管理菜单 -->
               <el-menu-item index="1" :class="{ 'is-active': activeIndex === '1' }">
                 <el-icon><Edit /></el-icon>
-                <span>排课数据</span>
+                <span>课程调度</span>
               </el-menu-item>
               
               <!-- 数据分析子菜单 -->

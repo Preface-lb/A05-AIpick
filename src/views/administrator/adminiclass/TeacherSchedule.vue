@@ -372,12 +372,12 @@ export default {
       )
     },
     
-    getCourse(day, timeSlotIndex) {
-      return this.courses.find(course => 
-        course.day === day && course.timeSlot === timeSlotIndex
-      ) || {}
-    },
-
+getCourse(day, timeSlotIndex) {
+  const course = this.courses.find(
+    (course) => course.day === day && course.timeSlot === timeSlotIndex,
+  )
+  return course || { name: '' }  // 提供默认值
+},
     showPrintSettingsDialog() {
       const weekStart = new Date(this.startDate)
       weekStart.setDate(weekStart.getDate() + (this.currentWeek - 1) * 7)
