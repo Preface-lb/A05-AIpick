@@ -140,7 +140,7 @@
             <div class="breadcrumb">
               <el-breadcrumb separator="/">
                 <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-                <el-breadcrumb-item v-if="activeIndex === '1'">排课数据</el-breadcrumb-item>
+                <el-breadcrumb-item v-if="activeIndex === '1'">课程调度</el-breadcrumb-item>
                 <el-breadcrumb-item v-else-if="activeIndex.startsWith('2')">数据分析</el-breadcrumb-item>
                 <el-breadcrumb-item v-else-if="activeIndex.startsWith('3')">具体课表查询</el-breadcrumb-item>
                 <el-breadcrumb-item v-else-if="activeIndex.startsWith('4')">优化与反馈</el-breadcrumb-item>
